@@ -14,7 +14,7 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 
 import io.flutter.view.TextureRegistry;
-
+import ai.deepar.ar.DeepAR;
 /** DeepArPlugin */
 public class DeepArPlugin implements FlutterPlugin, MethodCallHandler {
   /// The MethodChannel that will the communication between Flutter and native Android
@@ -36,15 +36,21 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler {
   public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
     Map<String, Number> arguments = (Map<String, Number>) call.arguments;
     if (call.method.equals("getPlatformVersion")) {
+
       result.success("Android " + android.os.Build.VERSION.RELEASE);
+
     }if(call.method.equals("buildPreview")){
+      
       TextureRegistry.SurfaceTextureEntry entry = textures.createSurfaceTexture();
 
-       surfaceTexture = entry.surfaceTexture();
+      surfaceTexture = entry.surfaceTexture();
+
       int width = arguments.get("width").intValue();
       int height = arguments.get("height").intValue();
+
       surfaceTexture.setDefaultBufferSize(width, height);
-              result.success(entry.id());
+
+      result.success(entry.id());
 
     } else if (call.method.equals("dispose")) {
       long textureId = arguments.get("textureId").longValue();
