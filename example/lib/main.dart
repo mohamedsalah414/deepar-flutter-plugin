@@ -1,15 +1,20 @@
+import 'package:camera/camera.dart';
+import 'package:deep_ar/deep_ar_controller.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:deep_ar/deep_ar.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final cameras = await availableCameras();
+  runApp(MyApp(cameras));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({Key? key}) : super(key: key);
+  final List<CameraDescription> cameras;
+  const MyApp(this.cameras, {Key? key}) : super(key: key);
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -17,11 +22,13 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
-
+  late final DeepArController _controller;
   @override
   void initState() {
     super.initState();
-    initPlatformState();
+    // initPlatformState();
+    _controller = DeepArController(widget.cameras[0], ResolutionPreset.medium);
+    _controller.initialize().then((value) => setState(() {}));
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
@@ -59,7 +66,9 @@ class _MyAppState extends State<MyApp> {
             Center(
               child: Text('Running on: $_platformVersion\n'),
             ),
-            const PreviewWidget()
+            _controller.value.isInitialized
+                ? DeepArPreview(_controller)
+                : SizedBox.shrink()
           ],
         ),
       ),

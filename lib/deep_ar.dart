@@ -1,7 +1,12 @@
 import 'dart:async';
 
+import 'package:camera/camera.dart';
+import 'package:deep_ar/deep_ar_controller.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+export 'deep_ar_preview.dart';
 
 class DeepAr {
   static int? textureId;
@@ -18,35 +23,5 @@ class DeepAr {
       'height': height,
     });
     return textureId!;
-  }
-}
-
-class PreviewWidget extends StatefulWidget {
-  const PreviewWidget({Key? key}) : super(key: key);
-
-  @override
-  State<PreviewWidget> createState() => _PreviewWidgetState();
-}
-
-class _PreviewWidgetState extends State<PreviewWidget> {
-  @override
-  void initState() {
-    DeepAr.initialize(200, 200).then((value) => setState(() {}));
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DeepAr.textureId != null
-        ? SizedBox(
-            height: 200,
-            width: 200,
-            child: Texture(textureId: DeepAr.textureId!),
-          )
-        : Container(
-            height: 100,
-            width: 100,
-            color: Colors.green,
-          );
   }
 }

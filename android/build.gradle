@@ -39,6 +39,6 @@ android {
 
 dependencies {
     
-    implementation (name: 'deepar_module', ext: 'aar')
+    api (name: 'deepar_module', ext: 'aar')
 
 }
