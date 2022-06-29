@@ -14,6 +14,7 @@ import java.util.Map;
 
 import ai.deepar.ar.ARErrorType;
 import ai.deepar.ar.AREventListener;
+import ai.deepar.ar.DeepARImageFormat;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -43,53 +44,63 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
     channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "deep_ar");
     channel.setMethodCallHandler(this);
 
-    new MethodChannel(flutterPluginBinding.getBinaryMessenger(), MethodStrings.channelStream).setMethodCallHandler(
-            (call, result) -> streamChannelHandler(call, result)
-    );
-  }
-  public void streamChannelHandler(@NonNull MethodCall call, @NonNull Result result){
-    Map<String, byte[]> arguments = (Map<String, byte[]>) call.arguments;
 
-    if (call.method.equals(MethodStrings.passFramesToNative)) {
-      byte[] imageBytes = arguments.get("imageData");
-      Log.d(TAG, "passFramesToNative");
-
-      try {
-        ByteBuffer buffer = ByteBuffer.wrap(imageBytes);
-        //deepAR.receiveFrame(buffer, 200, 200, 180, false, DeepARImageFormat.YUV_420_888, 1);
-      }catch (Exception e){
-        Log.e("ERROR", e.getMessage());
-      }
-    }
   }
+
 
   @Override
   public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-    Map<String, Number> arguments = (Map<String, Number>) call.arguments;
-    if (call.method.equals("getPlatformVersion")) {
+    Map<String, Object> arguments = (Map<String, Object>) call.arguments;
+    if (call.method.equals(MethodStrings.receiveFrame)) {
+      Log.d(TAG, "MethodStrings.receiveFramesInNative Begin");
+      final ByteBuffer yBuffer = ByteBuffer.wrap((byte[]) arguments.get("y_plane")) ;
+      final ByteBuffer uBuffer = ByteBuffer.wrap((byte[]) arguments.get("u_plane")) ;
+      final ByteBuffer vBuffer = ByteBuffer.wrap((byte[]) arguments.get("v_plane")) ;
+      int imageHeight = (int) arguments.get("image_height");
+      int imageWidth = (int) arguments.get("image_width");
+      int pixelStride = (int) arguments.get("pixel_stride");
+
+      int ySize = yBuffer.remaining();
+      int uSize = uBuffer.remaining();
+      int vSize = vBuffer.remaining();
+      byte[] byteData;
+      byteData = new byte[ySize + uSize + vSize];
+
+      //U and V are swapped
+      yBuffer.get(byteData, 0, ySize);
+      vBuffer.get(byteData, ySize, vSize);
+      uBuffer.get(byteData, ySize + vSize, uSize);
+      try {
+        ByteBuffer buffer = ByteBuffer.wrap(byteData);
+        deepAR.receiveFrame(buffer, imageWidth , imageHeight, 0, false, DeepARImageFormat.YUV_420_888, pixelStride);
+      }catch (Exception e){
+        Log.e("ERROR", e.getMessage());
+      }
+      Log.d(TAG, "MethodStrings.receiveFramesInNative End");
+      result.success(1);
+    }else if (call.method.equals("getPlatformVersion")) {
 
       result.success("Android " + android.os.Build.VERSION.RELEASE);
 
-    }else if(call.method.equals("initalize")){
+    }else if(call.method.equals(MethodStrings.initalize)){
 
       final boolean resp  = initializeDeepAR();
       result.success(resp);
 
-    } else if(call.method.equals("build_preview")){
+    } else if(call.method.equals(MethodStrings.buildPreview)){
       
       TextureRegistry.SurfaceTextureEntry entry = textures.createSurfaceTexture();
 
       surfaceTexture = entry.surfaceTexture();
 
-      int width = arguments.get("width").intValue();
-      int height = arguments.get("height").intValue();
+      int width = ((Number) arguments.get("width")).intValue();
+      int height =((Number) arguments.get("height")).intValue();
 
       surfaceTexture.setDefaultBufferSize(width, height);
       deepAR.setRenderSurface(new Surface(surfaceTexture), width, height);
       result.success(entry.id());
 
-    } else if (call.method.equals("dispose")) {
-      long textureId = arguments.get("textureId").longValue();
+    } else if (call.method.equals(MethodStrings.dispose)) {
       surfaceTexture.release();
       result.success(true);
     } else {

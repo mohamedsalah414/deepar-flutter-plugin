@@ -17,6 +17,7 @@ class DeepArController extends CameraController {
     print("textureID $textureId");
   }
 
+  bool sendFrames = true;
   @override
   Widget buildPreview() {
     super.startImageStream((image) {
@@ -25,7 +26,14 @@ class DeepArController extends CameraController {
       print("plane V length ${image.planes[2].bytes.toList().length} ");
       print("image height ${image.height}");
       print("image width ${image.width}");
+      if (sendFrames) {
+        _deepArPlatformHandler
+            .receiveFrame(image)
+            .then((value) => print("frame receive result $value"));
+        sendFrames = false;
+      }
     });
+
     return Texture(textureId: textureId!);
   }
 
