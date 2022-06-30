@@ -6,10 +6,13 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.media.Image;
+import android.os.AsyncTask;
 import android.util.Log;
 import android.view.Surface;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Map;
 
 import ai.deepar.ar.ARErrorType;
@@ -35,16 +38,44 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
   private TextureRegistry textures;
   private SurfaceTexture surfaceTexture;
 
+  private ByteBuffer[] buffers;
+  //private ByteBuffer buffer;
+  private int currentBuffer = 0;
+  private static final int NUMBER_OF_BUFFERS=2;
+
   private Context context;
   private String TAG = "DEEP_AR_LOGS";
+  ArrayList<String> effects;
+
+  private void initializeFilters() {
+    effects = new ArrayList<>();
+    effects.add("none");
+    effects.add("viking_helmet.deepar");
+    effects.add("MakeupLook.deepar");
+    effects.add("Split_View_Look.deepar");
+    effects.add("Emotions_Exaggerator.deepar");
+    effects.add("Emotion_Meter.deepar");
+    effects.add("Stallone.deepar");
+    effects.add("flower_face.deepar");
+    effects.add("galaxy_background.deepar");
+    effects.add("Humanoid.deepar");
+    effects.add("Neon_Devil_Horns.deepar");
+    effects.add("Ping_Pong.deepar");
+    effects.add("Pixel_Hearts.deepar");
+    effects.add("Snail.deepar");
+    effects.add("Hope.deepar");
+    effects.add("Vendetta_Mask.deepar");
+    effects.add("Fire_Effect.deepar");
+    effects.add("burning_effect.deepar");
+    effects.add("Elephant_Trunk.deepar");
+  }
+
   @Override
   public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
     this.textures = flutterPluginBinding.getTextureRegistry();
     context = flutterPluginBinding.getApplicationContext();
     channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "deep_ar");
     channel.setMethodCallHandler(this);
-
-
   }
 
 
@@ -60,25 +91,40 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
       int imageWidth = (int) arguments.get("image_width");
       int pixelStride = (int) arguments.get("pixel_stride");
 
-      int ySize = yBuffer.remaining();
-      int uSize = uBuffer.remaining();
-      int vSize = vBuffer.remaining();
-      byte[] byteData;
-      byteData = new byte[ySize + uSize + vSize];
 
-      //U and V are swapped
-      yBuffer.get(byteData, 0, ySize);
-      vBuffer.get(byteData, ySize, vSize);
-      uBuffer.get(byteData, ySize + vSize, uSize);
+//      int ySize = yBuffer.remaining();
+//      int uSize = uBuffer.remaining();
+//      int vSize = vBuffer.remaining();
+//      byte[] byteData;
+//      byteData = new byte[ySize + uSize + vSize];
+//
+//      //U and V are swapped
+//      yBuffer.get(byteData, 0, ySize);
+//      vBuffer.get(byteData, ySize, vSize);
+//      uBuffer.get(byteData, ySize + vSize, uSize);
+
+      buffers[currentBuffer].put(yBuffer);
+      buffers[currentBuffer].put(vBuffer);
+      buffers[currentBuffer].put(uBuffer);
+      buffers[currentBuffer].position(0);
+
       try {
-        ByteBuffer buffer = ByteBuffer.wrap(byteData);
-        deepAR.receiveFrame(buffer, imageWidth , imageHeight, 0, false, DeepARImageFormat.YUV_420_888, pixelStride);
+        //buffer = ByteBuffer.wrap(byteData);
+        deepAR.receiveFrame(buffers[currentBuffer], imageWidth , imageHeight, 270, true, DeepARImageFormat.YUV_420_888, pixelStride);
       }catch (Exception e){
         Log.e("ERROR", e.getMessage());
       }
+      currentBuffer = (currentBuffer + 1) % NUMBER_OF_BUFFERS;
       Log.d(TAG, "MethodStrings.receiveFramesInNative End");
       result.success(1);
-    }else if (call.method.equals("getPlatformVersion")) {
+    }else if (call.method.equals("switch_effect")) {
+      int effect = ((Number) arguments.get("effect")).intValue();
+      Log.d(TAG, "onMethodCall: switch_effect = "+effect);
+      deepAR.switchEffect("effect", getFilterPath(effects.get(effect)));
+      result.success("Effect Changed" );
+
+    }
+    else if (call.method.equals("getPlatformVersion")) {
 
       result.success("Android " + android.os.Build.VERSION.RELEASE);
 
@@ -113,12 +159,31 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
       deepAR = new DeepAR(context);
       deepAR.setLicenseKey("53de9b68021fd5be051ddd80c8d1aee5653eda7cabcd58776c1a96e5027f4a8c78d4946795ccd944");
       deepAR.initialize(context, this);
+
+      initializeFilters(); // all deepAR filters
+
+      deepAR.changeLiveMode(true);
+
+      // initialise buffer to be used to render frames
+      buffers = new ByteBuffer[NUMBER_OF_BUFFERS];
+      for (int i = 0; i < NUMBER_OF_BUFFERS; i++) {
+        buffers[i] = ByteBuffer.allocateDirect(1080 * 1920 * 3);
+        buffers[i].order(ByteOrder.nativeOrder());
+        buffers[i].position(0);
+      }
       return true;
     } catch (Exception e) {
       Log.e(TAG, "ERROR" + e);
       return false;
     }
 
+  }
+
+  private String getFilterPath(String filterName) {
+    if (filterName.equals("none")) {
+      return null;
+    }
+    return "file:///android_asset/" + filterName;
   }
 
 
@@ -174,7 +239,7 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
 
   @Override
   public void frameAvailable(Image image) {
-
+    Log.d(TAG, "frameAvailable: "+image.getHeight());
   }
 
   @Override

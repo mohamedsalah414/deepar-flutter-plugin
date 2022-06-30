@@ -6,6 +6,8 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:deep_ar/deep_ar.dart';
 
+import 'dart:math';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final cameras = await availableCameras();
@@ -27,7 +29,10 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     // initPlatformState();
-    _controller = DeepArController(widget.cameras[0], ResolutionPreset.medium);
+
+    CameraDescription front = widget.cameras.firstWhere(
+        (camera) => camera.lensDirection == CameraLensDirection.front);
+    _controller = DeepArController(front, ResolutionPreset.low);
     _controller.initialize().then((value) => setState(() {}));
   }
 
@@ -67,8 +72,16 @@ class _MyAppState extends State<MyApp> {
               child: Text('Running on: $_platformVersion\n'),
             ),
             _controller.value.isInitialized
-                ? DeepArPreview(_controller)
-                : SizedBox.shrink()
+                ? SizedBox(height: 500, child: DeepArPreview(_controller))
+                : SizedBox.shrink(),
+            const SizedBox(height: 20),
+            Center(
+              child: ElevatedButton(
+                  onPressed: () {
+                    _controller.switchEffect(Random().nextInt(10));
+                  },
+                  child: const Text("Switch Effect")),
+            ),
           ],
         ),
       ),

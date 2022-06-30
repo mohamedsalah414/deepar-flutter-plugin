@@ -16,8 +16,8 @@ class DeepArPlatformHandler {
 
   Future<int?> buildPreview() async {
     return _channel.invokeMethod<int>(PlatformStrings.buildPreview, {
-      'width': 1200,
-      'height': 3000,
+      'width': 1080,
+      'height': 1920,
     });
   }
 
@@ -29,6 +29,12 @@ class DeepArPlatformHandler {
       "image_height": image.height,
       "image_width": image.width,
       "pixel_stride": image.planes[1].bytesPerPixel
+    });
+  }
+
+  Future<String?> switchEffect(int effect) {
+    return _channel.invokeMethod<String>(PlatformStrings.switchEffect, {
+      'effect': effect,
     });
   }
 }

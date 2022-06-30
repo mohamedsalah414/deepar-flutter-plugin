@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:camera/camera.dart';
 import 'package:deep_ar/deep_ar_platform_handler.dart';
 import 'package:flutter/material.dart';
@@ -20,17 +18,17 @@ class DeepArController extends CameraController {
   bool sendFrames = true;
   @override
   Widget buildPreview() {
-    super.startImageStream((image) {
-      print("plane Y length ${image.planes[0].bytes.toList().length} ");
-      print("plane U length ${image.planes[1].bytes.toList().length} ");
-      print("plane V length ${image.planes[2].bytes.toList().length} ");
-      print("image height ${image.height}");
-      print("image width ${image.width}");
+    super.startImageStream((image) async {
+      // print("plane Y length ${image.planes[0].bytes.toList().length} ");
+      // print("plane U length ${image.planes[1].bytes.toList().length} ");
+      // print("plane V length ${image.planes[2].bytes.toList().length} ");
+      // print("image height ${image.height}");
+      // print("image width ${image.width}");
       if (sendFrames) {
         _deepArPlatformHandler
             .receiveFrame(image)
             .then((value) => print("frame receive result $value"));
-        sendFrames = false;
+        //sendFrames = false;
       }
     });
 
@@ -47,5 +45,9 @@ class DeepArController extends CameraController {
   Future<void> pausePreview() async {
     stopImageStream();
     // return super.pausePreview();
+  }
+
+  Future<String?> switchEffect(int effect) {
+    return _deepArPlatformHandler.switchEffect(effect);
   }
 }
