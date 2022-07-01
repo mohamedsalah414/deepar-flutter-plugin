@@ -19,6 +19,8 @@ import ai.deepar.ar.ARErrorType;
 import ai.deepar.ar.AREventListener;
 import ai.deepar.ar.DeepARImageFormat;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.plugin.common.BasicMessageChannel;
+import io.flutter.plugin.common.BinaryCodec;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -48,6 +50,7 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
   private Context context;
   private String TAG = "DEEP_AR_LOGS";
   ArrayList<String> effects;
+  ByteBuffer emptyBuffer = ByteBuffer.allocateDirect(1);
 
   private void initializeFilters() {
     effects = new ArrayList<>();
@@ -78,28 +81,29 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
    context = flutterPluginBinding.getApplicationContext();
    channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "deep_ar");
    channel.setMethodCallHandler(this);
+    final BasicMessageChannel<ByteBuffer> framesChannel =
+            new BasicMessageChannel<>(flutterPluginBinding.getBinaryMessenger(), "deep_ar/frames", BinaryCodec.INSTANCE);
+    framesChannel.setMessageHandler((byteBuffer, reply) -> {
+      Log.v(TAG, "Received message from Dart...");
+      buffers[currentBuffer].put(byteBuffer);
+      buffers[currentBuffer].position(0);
+      try {
+        deepAR.receiveFrame(buffers[currentBuffer] , 1280 , 720, 270, true, DeepARImageFormat.YUV_420_888, 2);
+      }catch (Exception e){
+        Log.e("ERROR", e.getMessage());
+      }
+      currentBuffer = (currentBuffer + 1) % NUMBER_OF_BUFFERS;
+
+      Log.v(TAG, "Writing response back to Dart...");
+      reply.reply(emptyBuffer);
+    });
   }
 
 
   @Override
   public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
     Map<String, Object> arguments = (Map<String, Object>) call.arguments;
-    if (call.method.equals(MethodStrings.receiveFrame)) {
-      int imageHeight = (int) arguments.get("image_height");
-      int imageWidth = (int) arguments.get("image_width");
-      int pixelStride = (int) arguments.get("pixel_stride");
-
-      buffers[currentBuffer].put((byte[]) arguments.get("bytes"));
-      buffers[currentBuffer].position(0);
-
-      try { 
-        deepAR.receiveFrame(buffers[currentBuffer] , imageWidth , imageHeight, 270, true, DeepARImageFormat.YUV_420_888, pixelStride);
-      }catch (Exception e){
-        Log.e("ERROR", e.getMessage());
-      }
-      currentBuffer = (currentBuffer + 1) % NUMBER_OF_BUFFERS;
-      result.success(1);
-    }else if (call.method.equals("switch_effect")) {
+    if (call.method.equals("switch_effect")) {
       int effect = ((Number) arguments.get("effect")).intValue();
       Log.d(TAG, "onMethodCall: switch_effect = "+effect);
       deepAR.switchEffect("effect", getFilterPath(effects.get(effect)));

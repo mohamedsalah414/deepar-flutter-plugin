@@ -32,7 +32,7 @@ class _MyAppState extends State<MyApp> {
 
     CameraDescription front = widget.cameras.firstWhere(
         (camera) => camera.lensDirection == CameraLensDirection.front);
-    _controller = DeepArController(front, ResolutionPreset.high);
+    _controller = DeepArController(front, ResolutionPreset.veryHigh);
     _controller.initialize().then((value) => setState(() {}));
   }
 
