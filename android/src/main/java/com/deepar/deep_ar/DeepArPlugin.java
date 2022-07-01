@@ -85,39 +85,19 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
   public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
     Map<String, Object> arguments = (Map<String, Object>) call.arguments;
     if (call.method.equals(MethodStrings.receiveFrame)) {
-      Log.d(TAG, "MethodStrings.receiveFramesInNative Begin");
-      final ByteBuffer yBuffer = ByteBuffer.wrap((byte[]) arguments.get("y_plane")) ;
-      final ByteBuffer uBuffer = ByteBuffer.wrap((byte[]) arguments.get("u_plane")) ;
-      final ByteBuffer vBuffer = ByteBuffer.wrap((byte[]) arguments.get("v_plane")) ;
       int imageHeight = (int) arguments.get("image_height");
       int imageWidth = (int) arguments.get("image_width");
       int pixelStride = (int) arguments.get("pixel_stride");
 
-
-//      int ySize = yBuffer.remaining();
-//      int uSize = uBuffer.remaining();
-//      int vSize = vBuffer.remaining();
-//      byte[] byteData;
-//      byteData = new byte[ySize + uSize + vSize];
-//
-//      //U and V are swapped
-//      yBuffer.get(byteData, 0, ySize);
-//      vBuffer.get(byteData, ySize, vSize);
-//      uBuffer.get(byteData, ySize + vSize, uSize);
-
-      buffers[currentBuffer].put(yBuffer);
-      buffers[currentBuffer].put(vBuffer);
-      buffers[currentBuffer].put(uBuffer);
+      buffers[currentBuffer].put((byte[]) arguments.get("bytes"));
       buffers[currentBuffer].position(0);
 
-      try {
-        //buffer = ByteBuffer.wrap(byteData);
-        deepAR.receiveFrame(buffers[currentBuffer], imageWidth , imageHeight, 270, true, DeepARImageFormat.YUV_420_888, pixelStride);
+      try { 
+        deepAR.receiveFrame(buffers[currentBuffer] , imageWidth , imageHeight, 270, true, DeepARImageFormat.YUV_420_888, pixelStride);
       }catch (Exception e){
         Log.e("ERROR", e.getMessage());
       }
       currentBuffer = (currentBuffer + 1) % NUMBER_OF_BUFFERS;
-      Log.d(TAG, "MethodStrings.receiveFramesInNative End");
       result.success(1);
     }else if (call.method.equals("switch_effect")) {
       int effect = ((Number) arguments.get("effect")).intValue();
@@ -132,13 +112,8 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
 
     }else if(call.method.equals(MethodStrings.initalize)){
 
-      AsyncTask.execute(new Runnable() {
-        @Override
-        public void run() {
-          final boolean resp  = initializeDeepAR();
-          result.success(resp);
-        }
-      });
+      final boolean resp  = initializeDeepAR();
+      result.success(resp);
 
 
 

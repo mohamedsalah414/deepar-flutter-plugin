@@ -32,7 +32,7 @@ class _MyAppState extends State<MyApp> {
 
     CameraDescription front = widget.cameras.firstWhere(
         (camera) => camera.lensDirection == CameraLensDirection.front);
-    _controller = DeepArController(front, ResolutionPreset.veryHigh);
+    _controller = DeepArController(front, ResolutionPreset.high);
     _controller.initialize().then((value) => setState(() {}));
   }
 
@@ -75,12 +75,23 @@ class _MyAppState extends State<MyApp> {
                 ? SizedBox(height: 500, child: DeepArPreview(_controller))
                 : SizedBox.shrink(),
             const SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                  onPressed: () {
-                    _controller.switchEffect(Random().nextInt(10));
-                  },
-                  child: const Text("Switch Effect")),
+            Row(
+              children: [
+                ElevatedButton(
+                    onPressed: () {
+                      _controller.switchEffect(Random().nextInt(10));
+                    },
+                    child: const Text("Switch Effect")),
+                ElevatedButton(
+                    onPressed: () {
+                      if (_controller.value.isPreviewPaused) {
+                        _controller.resumePreview();
+                      } else {
+                        _controller.pausePreview();
+                      }
+                    },
+                    child: const Text("Switch Effect")),
+              ],
             ),
           ],
         ),

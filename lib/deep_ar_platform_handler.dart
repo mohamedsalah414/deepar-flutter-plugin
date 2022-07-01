@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:camera/camera.dart';
 import 'package:deep_ar/platform_strings.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class DeepArPlatformHandler {
@@ -22,10 +25,13 @@ class DeepArPlatformHandler {
   }
 
   Future<int?> receiveFrame(CameraImage image) async {
+    //add data to buffer. v and u are swapped intentionally
+    WriteBuffer buffer = WriteBuffer();
+    buffer.putUint8List(image.planes[0].bytes);
+    buffer.putUint8List(image.planes[2].bytes);
+    buffer.putUint8List(image.planes[1].bytes);
     return _channel.invokeMethod<int>(PlatformStrings.receiveFrame, {
-      "y_plane": image.planes[0].bytes,
-      "u_plane": image.planes[1].bytes,
-      "v_plane": image.planes[2].bytes,
+      "bytes": buffer.done().buffer.asUint8List(),
       "image_height": image.height,
       "image_width": image.width,
       "pixel_stride": image.planes[1].bytesPerPixel

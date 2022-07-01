@@ -19,16 +19,8 @@ class DeepArController extends CameraController {
   @override
   Widget buildPreview() {
     super.startImageStream((image) async {
-      // print("plane Y length ${image.planes[0].bytes.toList().length} ");
-      // print("plane U length ${image.planes[1].bytes.toList().length} ");
-      // print("plane V length ${image.planes[2].bytes.toList().length} ");
-      // print("image height ${image.height}");
-      // print("image width ${image.width}");
       if (sendFrames) {
-        _deepArPlatformHandler
-            .receiveFrame(image)
-            .then((value) => print("frame receive result $value"));
-        //sendFrames = false;
+        _deepArPlatformHandler.receiveFrame(image);
       }
     });
 
@@ -39,6 +31,14 @@ class DeepArController extends CameraController {
   Future<void> startVideoRecording() async {
     // TODO: implement startVideoRecording
     // return super.startVideoRecording();
+  }
+  @override
+  Future<void> resumePreview() async {
+    super.startImageStream((image) async {
+      if (sendFrames) {
+        _deepArPlatformHandler.receiveFrame(image);
+      }
+    });
   }
 
   @override
