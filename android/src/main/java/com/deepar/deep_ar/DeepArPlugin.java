@@ -19,11 +19,13 @@ import ai.deepar.ar.ARErrorType;
 import ai.deepar.ar.AREventListener;
 import ai.deepar.ar.DeepARImageFormat;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 
+import io.flutter.plugin.common.StandardMethodCodec;
 import io.flutter.view.TextureRegistry;
 import ai.deepar.ar.DeepAR;
 /** DeepArPlugin */
@@ -73,9 +75,9 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
   @Override
   public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
     this.textures = flutterPluginBinding.getTextureRegistry();
-    context = flutterPluginBinding.getApplicationContext();
-    channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "deep_ar");
-    channel.setMethodCallHandler(this);
+   context = flutterPluginBinding.getApplicationContext();
+   channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "deep_ar");
+   channel.setMethodCallHandler(this);
   }
 
 
@@ -130,8 +132,15 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
 
     }else if(call.method.equals(MethodStrings.initalize)){
 
-      final boolean resp  = initializeDeepAR();
-      result.success(resp);
+      AsyncTask.execute(new Runnable() {
+        @Override
+        public void run() {
+          final boolean resp  = initializeDeepAR();
+          result.success(resp);
+        }
+      });
+
+
 
     } else if(call.method.equals(MethodStrings.buildPreview)){
       
