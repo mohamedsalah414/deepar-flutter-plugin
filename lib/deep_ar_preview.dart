@@ -14,15 +14,12 @@ class DeepArPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     return deepArController.isInitialized
         ? Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            SizedBox(height: 600, width: 300, child: deepArController.buildPreview()),
-            child ?? Container(),
-          ],
-        )
+            fit: StackFit.expand,
+            children: <Widget>[
+              SizedBox(height: 720, child: deepArController.buildPreview()),
+              child ?? Container(),
+            ],
+          )
         : Container();
   }
-
-
-
 }

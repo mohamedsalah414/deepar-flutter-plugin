@@ -43,6 +43,7 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
 
   private TextureRegistry textures;
   private SurfaceTexture surfaceTexture, tempSurfaceTexture;
+  private Surface surface;
 
   private ByteBuffer[] buffers;
   //private ByteBuffer buffer;
@@ -53,6 +54,7 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
   private String TAG = "DEEP_AR_LOGS";
   ArrayList<String> effects;
   ByteBuffer emptyBuffer = ByteBuffer.allocateDirect(1);
+  private long textureId;
 
   private void initializeFilters() {
     effects = new ArrayList<>();
@@ -139,8 +141,10 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
 
       TextureRegistry.SurfaceTextureEntry entry = mFlutterPluginBinding.getTextureRegistry().createSurfaceTexture();
       tempSurfaceTexture = entry.surfaceTexture();
-      tempSurfaceTexture.setDefaultBufferSize(1280 , 720);
-      deepAR.setRenderSurface(new Surface(tempSurfaceTexture), 1280 , 720);
+      tempSurfaceTexture.setDefaultBufferSize(1920 , 1080);
+      surface = new Surface(tempSurfaceTexture);
+      deepAR.setRenderSurface(surface, 1920 , 1080);
+      textureId = entry.id();
 
       return true;
     } catch (Exception e) {
@@ -233,7 +237,8 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
 
     cameraXChannel = new MethodChannel(mFlutterPluginBinding.getBinaryMessenger(), "camerax");
 
-    CameraXHandler handler = new CameraXHandler(binding.getActivity(), mFlutterPluginBinding.getTextureRegistry(),  deepAR );
+    CameraXHandler handler = new CameraXHandler(binding.getActivity(),
+            mFlutterPluginBinding.getTextureRegistry(),  deepAR , surface, textureId);
     cameraXChannel.setMethodCallHandler(handler);
   }
 

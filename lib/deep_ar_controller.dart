@@ -11,7 +11,6 @@ class DeepArController {
 
   Future<void> initialize() async {
     await _deepArPlatformHandler.initialize();
-    await Future.delayed(Duration(seconds: 5));
     textureId = await _deepArPlatformHandler.startCamera();
     print("textureID $textureId");
   }
