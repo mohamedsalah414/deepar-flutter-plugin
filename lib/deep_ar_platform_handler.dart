@@ -11,6 +11,7 @@ class DeepArCodec extends StandardMessageCodec {
 
 class DeepArPlatformHandler {
   static const MethodChannel _channel = MethodChannel('deep_ar');
+  static const MethodChannel _cameraXChannel = MethodChannel('camerax');
   static const BasicMessageChannel _framesChannel =
       BasicMessageChannel("deep_ar/frames", BinaryCodec());
 
@@ -44,5 +45,11 @@ class DeepArPlatformHandler {
     return _channel.invokeMethod<String>(PlatformStrings.switchEffect, {
       'effect': effect,
     });
+  }
+
+  Future<int> startCamera() async {
+    int texturedId = await _cameraXChannel.invokeMethod("startCamera");
+    print("TEXTURE_IDD $texturedId");
+    return texturedId;
   }
 }

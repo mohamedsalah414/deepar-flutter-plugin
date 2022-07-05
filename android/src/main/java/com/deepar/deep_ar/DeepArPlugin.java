@@ -19,6 +19,8 @@ import ai.deepar.ar.ARErrorType;
 import ai.deepar.ar.AREventListener;
 import ai.deepar.ar.DeepARImageFormat;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.embedding.engine.plugins.activity.ActivityAware;
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
 import io.flutter.plugin.common.BasicMessageChannel;
 import io.flutter.plugin.common.BinaryCodec;
 import io.flutter.plugin.common.BinaryMessenger;
@@ -31,7 +33,7 @@ import io.flutter.plugin.common.StandardMethodCodec;
 import io.flutter.view.TextureRegistry;
 import ai.deepar.ar.DeepAR;
 /** DeepArPlugin */
-public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventListener {
+public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventListener, ActivityAware {
   /// The MethodChannel that will the communication between Flutter and native Android
   ///
   /// This local reference serves to register the plugin with the Flutter Engine and unregister it
@@ -40,7 +42,7 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
   private DeepAR deepAR;
 
   private TextureRegistry textures;
-  private SurfaceTexture surfaceTexture;
+  private SurfaceTexture surfaceTexture, tempSurfaceTexture;
 
   private ByteBuffer[] buffers;
   //private ByteBuffer buffer;
@@ -75,9 +77,12 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
     effects.add("Elephant_Trunk.deepar");
   }
 
+  FlutterPluginBinding mFlutterPluginBinding;
+
   @Override
   public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
     this.textures = flutterPluginBinding.getTextureRegistry();
+    mFlutterPluginBinding = flutterPluginBinding;
    context = flutterPluginBinding.getApplicationContext();
    channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "deep_ar");
    channel.setMethodCallHandler(this);
@@ -116,29 +121,9 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
 
     }else if(call.method.equals(MethodStrings.initalize)){
 
-      final boolean resp  = initializeDeepAR();
-      result.success(resp);
-
-
-
-    } else if(call.method.equals(MethodStrings.buildPreview)){
-      
-      TextureRegistry.SurfaceTextureEntry entry = textures.createSurfaceTexture();
-
-      surfaceTexture = entry.surfaceTexture();
-
-      int width = ((Number) arguments.get("width")).intValue();
-      int height =((Number) arguments.get("height")).intValue();
-
-      surfaceTexture.setDefaultBufferSize(width, height);
-      deepAR.setRenderSurface(new Surface(surfaceTexture), width, height);
-      result.success(entry.id());
-
-    } else if (call.method.equals(MethodStrings.dispose)) {
-      surfaceTexture.release();
+      //final boolean resp  = initializeDeepAR();
       result.success(true);
-    } else {
-      result.notImplemented();
+
     }
   }
 
@@ -152,13 +137,11 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
 
       deepAR.changeLiveMode(true);
 
-      // initialise buffer to be used to render frames
-      buffers = new ByteBuffer[NUMBER_OF_BUFFERS];
-      for (int i = 0; i < NUMBER_OF_BUFFERS; i++) {
-        buffers[i] = ByteBuffer.allocateDirect(1080 * 1920 * 3);
-        buffers[i].order(ByteOrder.nativeOrder());
-        buffers[i].position(0);
-      }
+      TextureRegistry.SurfaceTextureEntry entry = mFlutterPluginBinding.getTextureRegistry().createSurfaceTexture();
+      tempSurfaceTexture = entry.surfaceTexture();
+      tempSurfaceTexture.setDefaultBufferSize(1280 , 720);
+      deepAR.setRenderSurface(new Surface(tempSurfaceTexture), 1280 , 720);
+
       return true;
     } catch (Exception e) {
       Log.e(TAG, "ERROR" + e);
@@ -212,7 +195,7 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
 
   @Override
   public void initialized() {
-
+    Log.d(TAG, "initialized__: DEEP_AR");
   }
 
   @Override
@@ -237,6 +220,35 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
 
   @Override
   public void effectSwitched(String s) {
+
+  }
+
+  MethodChannel cameraXChannel;
+
+
+  @Override
+  public void onAttachedToActivity(@NonNull ActivityPluginBinding binding) {
+
+    initializeDeepAR();
+
+    cameraXChannel = new MethodChannel(mFlutterPluginBinding.getBinaryMessenger(), "camerax");
+
+    CameraXHandler handler = new CameraXHandler(binding.getActivity(), mFlutterPluginBinding.getTextureRegistry(),  deepAR );
+    cameraXChannel.setMethodCallHandler(handler);
+  }
+
+  @Override
+  public void onDetachedFromActivityForConfigChanges() {
+
+  }
+
+  @Override
+  public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding) {
+
+  }
+
+  @Override
+  public void onDetachedFromActivity() {
 
   }
 }
