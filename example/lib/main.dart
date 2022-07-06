@@ -48,6 +48,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   late final DeepArController _controller;
+  bool isRecording = false;
 
   @override
   void didChangeDependencies() {
@@ -97,7 +98,19 @@ class _HomeState extends State<Home> {
                       color: Colors.white70,
                     )),
                 ElevatedButton(
-                    onPressed: () {}, child: const Text("Switch Effect")),
+                    onPressed: () {
+                      if (isRecording) {
+                        _controller.stopVideoRecording();
+                        isRecording = false;
+                      } else {
+                        _controller.startVideoRecording();
+                        isRecording = true;
+                      }
+
+                      setState(() {});
+                    },
+                    child: Text(
+                        isRecording ? "Stop Recording" : "Start Recording")),
                 IconButton(
                     iconSize: 60,
                     onPressed: () {

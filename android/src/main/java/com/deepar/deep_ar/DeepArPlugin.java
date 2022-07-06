@@ -13,7 +13,6 @@ import java.util.Map;
 
 import ai.deepar.ar.ARErrorType;
 import ai.deepar.ar.AREventListener;
-import ai.deepar.ar.CameraResolutionPreset;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
@@ -86,6 +85,14 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                 result.success("Effect Changed");
                 break;
 
+            case MethodStrings.startRecordingVideo:
+                String filePath = ((String) arguments.get("file_path")).toString();
+                deepAR.startVideoRecording(filePath);
+                break;
+
+            case MethodStrings.stopRecordingVideo:
+                deepAR.stopVideoRecording();
+                break;
         }
     }
 
@@ -106,6 +113,8 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
 
     }
 
+
+
     @Override
     public void onDetachedFromActivity() {
         flutterPlugin = null;
@@ -116,6 +125,7 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
         flutterPlugin = flutterPluginBinding;
     }
+
 
     private boolean initializeDeepAR(String licenseKey, int width, int height) {
         try {
@@ -138,7 +148,6 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
         }
 
     }
-
 
     @Override
     public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {

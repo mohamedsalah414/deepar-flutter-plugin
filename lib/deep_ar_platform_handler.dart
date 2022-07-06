@@ -22,16 +22,26 @@ class DeepArPlatformHandler {
     });
   }
 
+   Future<int> startCamera() async {
+    int texturedId = await _cameraXChannel.invokeMethod(PlatformStrings.startCamera);
+    // ignore: avoid_print
+    print("TEXTURE_IDD $texturedId");
+    return texturedId;
+  }
+
   Future<String?> switchEffect(int effect) {
     return _channel.invokeMethod<String>(PlatformStrings.switchEffect, {
       PlatformStrings.effect: effect,
     });
   }
 
-  Future<int> startCamera() async {
-    int texturedId = await _cameraXChannel.invokeMethod(PlatformStrings.startCamera);
-    // ignore: avoid_print
-    print("TEXTURE_IDD $texturedId");
-    return texturedId;
+  Future<void> startRecordingVideo(String filePath) async {
+    await _channel.invokeMethod(PlatformStrings.startRecordingVideo, {
+      'file_path': filePath,
+    });
+  }
+
+  Future<void> stopRecordingVideo() async {
+    await _channel.invokeMethod(PlatformStrings.stopRecordingVideo);
   }
 }
