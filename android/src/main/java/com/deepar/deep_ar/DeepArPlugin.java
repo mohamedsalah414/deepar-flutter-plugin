@@ -91,7 +91,6 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
     final BasicMessageChannel<ByteBuffer> framesChannel =
             new BasicMessageChannel<>(flutterPluginBinding.getBinaryMessenger(), "deep_ar/frames", BinaryCodec.INSTANCE);
     framesChannel.setMessageHandler((byteBuffer, reply) -> {
-      Log.v(TAG, "Received message from Dart...");
       buffers[currentBuffer].put(byteBuffer);
       buffers[currentBuffer].position(0);
       try {
@@ -100,8 +99,6 @@ public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventLi
         Log.e("ERROR", e.getMessage());
       }
       currentBuffer = (currentBuffer + 1) % NUMBER_OF_BUFFERS;
-
-      Log.v(TAG, "Writing response back to Dart...");
       reply.reply(emptyBuffer);
     });
   }
