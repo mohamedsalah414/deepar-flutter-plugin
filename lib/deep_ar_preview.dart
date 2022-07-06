@@ -1,8 +1,5 @@
-import 'package:camera/camera.dart';
 import 'package:deep_ar/deep_ar_controller.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 class DeepArPreview extends StatelessWidget {
   final DeepArController deepArController;

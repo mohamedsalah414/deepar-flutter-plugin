@@ -1,18 +1,13 @@
 package com.deepar.deep_ar;
 
 import android.app.Activity;
-import android.graphics.SurfaceTexture;
 import android.util.Log;
 import android.util.Size;
-import android.view.Surface;
 
 import androidx.annotation.NonNull;
-import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
-import androidx.camera.core.Preview;
-import androidx.camera.core.SurfaceRequest;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleOwner;
@@ -29,43 +24,32 @@ import ai.deepar.ar.DeepAR;
 import ai.deepar.ar.DeepARImageFormat;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
-import io.flutter.view.TextureRegistry;
 
 public class CameraXHandler implements MethodChannel.MethodCallHandler {
-    CameraXHandler(Activity activity, TextureRegistry textureRegistry, DeepAR deepARR, Surface globalSurface, long textureId){
-        mActivity = activity;
-        //mTextureRegistry = textureRegistry;
-        deepAR = deepARR;
-        surface = globalSurface;
+    CameraXHandler(Activity activity, long textureId, DeepAR deepAR) {
+        this.activity = activity;
+        this.deepAR = deepAR;
         this.textureId = textureId;
     }
 
-    final Activity mActivity;
-    //final TextureRegistry mTextureRegistry;
-     ProcessCameraProvider processCameraProvider;
-     //TextureRegistry.SurfaceTextureEntry textureEntry;
-     private DeepAR deepAR;
-     private Camera camera;
-     private long textureId;
-    Preview.SurfaceProvider surfaceProvider;
-    Preview preview;
-    private Surface surface;
-
+    final private Activity activity;
+    private final DeepAR deepAR;
+    private final long textureId;
+    private ProcessCameraProvider processCameraProvider;
     private ByteBuffer[] buffers;
     private int currentBuffer = 0;
-    private static final int NUMBER_OF_BUFFERS=2;
+    private static final int NUMBER_OF_BUFFERS = 2;
 
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
-if (call.method.equals("startCamera")){
-    startNative(call, result);
-}
+        if (call.method.equals(MethodStrings.startCamera)) {
+            startNative(call, result);
+        }
     }
-    boolean sendFrames = true;
 
     private void startNative(MethodCall call, MethodChannel.Result result) {
-        final ListenableFuture<ProcessCameraProvider> future = ProcessCameraProvider.getInstance(mActivity);
-        Executor executor = ContextCompat.getMainExecutor(mActivity);
+        final ListenableFuture<ProcessCameraProvider> future = ProcessCameraProvider.getInstance(activity);
+        Executor executor = ContextCompat.getMainExecutor(activity);
         CameraResolutionPreset cameraResolutionPreset = CameraResolutionPreset.P1920x1080;
         buffers = new ByteBuffer[NUMBER_OF_BUFFERS];
         for (int i = 0; i < NUMBER_OF_BUFFERS; i++) {
@@ -113,9 +97,9 @@ if (call.method.equals("startCamera")){
                                             image.getPlanes()[1].getPixelStride()
                                     );
 
-                                }catch (Exception e){
+                                } catch (Exception e) {
                                     e.printStackTrace();
-                                    Log.e("ERRRR", ""+e );
+                                    Log.e("ERRRR", "" + e);
                                 }
 
                             }
@@ -125,7 +109,6 @@ if (call.method.equals("startCamera")){
                     };
 
 
-
                     ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
                             .setTargetResolution(cameraResolution)
                             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
@@ -133,10 +116,9 @@ if (call.method.equals("startCamera")){
 
                     imageAnalysis.setAnalyzer(executor, analyzer);
 
-                    camera = processCameraProvider.bindToLifecycle((LifecycleOwner) mActivity, CameraSelector.DEFAULT_FRONT_CAMERA, imageAnalysis);
-
+                    processCameraProvider.bindToLifecycle((LifecycleOwner) activity,
+                            CameraSelector.DEFAULT_FRONT_CAMERA, imageAnalysis);
                     result.success(textureId);
-
 
 
                 } catch (ExecutionException e) {

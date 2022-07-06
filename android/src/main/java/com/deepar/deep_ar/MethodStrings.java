@@ -1,12 +1,20 @@
 package com.deepar.deep_ar;
 
 public  class MethodStrings {
-    public static String channelName = "com.example.deep_ar_demo/deep_ar";
-    public static String channelStream = "com.example.deep_ar_demo/deep_ar/stream";
+
+    // Platform channels
+    public final static String generalChannel = "deep_ar";
+    public final static String cameraXChannel = "deep_ar/camerax";
+
+    // Methods
+    public final static  String initialize = "initialize";
+    public final  static  String switchEffect = "switch_effect";
+    public final static  String startCamera = "start_camera";
+    public final  static  String dispose = "dispose";
+
+    // Method arguments
+    public final static  String licenseKey = "license_key";
+    public final static  String effect = "effect";
 
 
-    public static  String initalize = "initalize";
-    public static  String buildPreview = "build_preview";
-    public static  String receiveFrame = "receive_frame";
-    public  static  String dispose = "dispose";
 }

@@ -2,255 +2,202 @@ package com.deepar.deep_ar;
 
 import androidx.annotation.NonNull;
 
-import android.content.Context;
+import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.media.Image;
-import android.os.AsyncTask;
 import android.util.Log;
 import android.view.Surface;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.ArrayList;
 import java.util.Map;
 
 import ai.deepar.ar.ARErrorType;
 import ai.deepar.ar.AREventListener;
-import ai.deepar.ar.DeepARImageFormat;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
-import io.flutter.plugin.common.BasicMessageChannel;
-import io.flutter.plugin.common.BinaryCodec;
-import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 
-import io.flutter.plugin.common.StandardMethodCodec;
 import io.flutter.view.TextureRegistry;
 import ai.deepar.ar.DeepAR;
-/** DeepArPlugin */
-public class DeepArPlugin implements FlutterPlugin, MethodCallHandler, AREventListener, ActivityAware {
-  /// The MethodChannel that will the communication between Flutter and native Android
-  ///
-  /// This local reference serves to register the plugin with the Flutter Engine and unregister it
-  /// when the Flutter Engine is detached from the Activity
-  private MethodChannel channel;
-  private DeepAR deepAR;
 
-  private TextureRegistry textures;
-  private SurfaceTexture surfaceTexture, tempSurfaceTexture;
-  private Surface surface;
+/**
+ * DeepArPlugin
+ */
+public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAware {
+    /// The MethodChannel that will the communication between Flutter and native Android
+    ///
+    /// This local reference serves to register the plugin with the Flutter Engine and unregister it
+    /// when the Flutter Engine is detached from the Activity
+    private MethodChannel cameraXChannel, channel;
 
-  private ByteBuffer[] buffers;
-  //private ByteBuffer buffer;
-  private int currentBuffer = 0;
-  private static final int NUMBER_OF_BUFFERS=2;
-
-  private Context context;
-  private String TAG = "DEEP_AR_LOGS";
-  ArrayList<String> effects;
-  ByteBuffer emptyBuffer = ByteBuffer.allocateDirect(1);
-  private long textureId;
-
-  private void initializeFilters() {
-    effects = new ArrayList<>();
-    effects.add("none");
-    effects.add("viking_helmet.deepar");
-    effects.add("MakeupLook.deepar");
-    effects.add("Split_View_Look.deepar");
-    effects.add("Emotions_Exaggerator.deepar");
-    effects.add("Emotion_Meter.deepar");
-    effects.add("Stallone.deepar");
-    effects.add("flower_face.deepar");
-    effects.add("galaxy_background.deepar");
-    effects.add("Humanoid.deepar");
-    effects.add("Neon_Devil_Horns.deepar");
-    effects.add("Ping_Pong.deepar");
-    effects.add("Pixel_Hearts.deepar");
-    effects.add("Snail.deepar");
-    effects.add("Hope.deepar");
-    effects.add("Vendetta_Mask.deepar");
-    effects.add("Fire_Effect.deepar");
-    effects.add("burning_effect.deepar");
-    effects.add("Elephant_Trunk.deepar");
-  }
-
-  FlutterPluginBinding mFlutterPluginBinding;
-
-  @Override
-  public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
-    this.textures = flutterPluginBinding.getTextureRegistry();
-    mFlutterPluginBinding = flutterPluginBinding;
-   context = flutterPluginBinding.getApplicationContext();
-   channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "deep_ar");
-   channel.setMethodCallHandler(this);
-    final BasicMessageChannel<ByteBuffer> framesChannel =
-            new BasicMessageChannel<>(flutterPluginBinding.getBinaryMessenger(), "deep_ar/frames", BinaryCodec.INSTANCE);
-    framesChannel.setMessageHandler((byteBuffer, reply) -> {
-      buffers[currentBuffer].put(byteBuffer);
-      buffers[currentBuffer].position(0);
-      try {
-        deepAR.receiveFrame(buffers[currentBuffer] , 1280 , 720, 270, true, DeepARImageFormat.YUV_420_888, 2);
-      }catch (Exception e){
-        Log.e("ERROR", e.getMessage());
-      }
-      currentBuffer = (currentBuffer + 1) % NUMBER_OF_BUFFERS;
-      reply.reply(emptyBuffer);
-    });
-  }
+    private final String TAG = "DEEP_AR_LOGS";
+    private Activity activity;
+    private DeepAR deepAR;
+    private Surface surface;
+    private long textureId;
+    private DeepArEffects deepArEffects;
+    private FlutterPluginBinding flutterPlugin;
+    private SurfaceTexture tempSurfaceTexture;
 
 
-  @Override
-  public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-    Map<String, Object> arguments = (Map<String, Object>) call.arguments;
-    if (call.method.equals("switch_effect")) {
-      int effect = ((Number) arguments.get("effect")).intValue();
-      Log.d(TAG, "onMethodCall: switch_effect = "+effect);
-      deepAR.switchEffect("effect", getFilterPath(effects.get(effect)));
-      result.success("Effect Changed" );
+    @Override
+    public void onAttachedToActivity(@NonNull ActivityPluginBinding binding) {
 
-    }
-    else if (call.method.equals("getPlatformVersion")) {
-
-      result.success("Android " + android.os.Build.VERSION.RELEASE);
-
-    }else if(call.method.equals(MethodStrings.initalize)){
-
-      //final boolean resp  = initializeDeepAR();
-      result.success(true);
-
-    }
-  }
-
-  private boolean initializeDeepAR() {
-    try {
-      deepAR = new DeepAR(context);
-      deepAR.setLicenseKey("53de9b68021fd5be051ddd80c8d1aee5653eda7cabcd58776c1a96e5027f4a8c78d4946795ccd944");
-      deepAR.initialize(context, this);
-
-      initializeFilters(); // all deepAR filters
-
-      deepAR.changeLiveMode(true);
-
-      TextureRegistry.SurfaceTextureEntry entry = mFlutterPluginBinding.getTextureRegistry().createSurfaceTexture();
-      tempSurfaceTexture = entry.surfaceTexture();
-      tempSurfaceTexture.setDefaultBufferSize(1920 , 1080);
-      surface = new Surface(tempSurfaceTexture);
-      deepAR.setRenderSurface(surface, 1920 , 1080);
-      textureId = entry.id();
-
-      return true;
-    } catch (Exception e) {
-      Log.e(TAG, "ERROR" + e);
-      return false;
+        activity = binding.getActivity();
+        deepArEffects = new DeepArEffects();
+        setDeepArMethodChannel();
     }
 
-  }
-
-  private String getFilterPath(String filterName) {
-    if (filterName.equals("none")) {
-      return null;
+    private void setDeepArMethodChannel() {
+        channel = new MethodChannel(flutterPlugin.getBinaryMessenger(), MethodStrings.generalChannel);
+        channel.setMethodCallHandler(new MethodCallHandler() {
+            @Override
+            public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
+                handleMethods(call, result);
+            }
+        });
     }
-    return "file:///android_asset/" + filterName;
-  }
+
+    private void handleMethods(MethodCall call, Result result) {
+        Map<String, Object> arguments = (Map<String, Object>) call.arguments;
+
+        switch (call.method) {
+            case MethodStrings.initialize: // Initialize
+                String licenseKey = (String) arguments.get(MethodStrings.licenseKey);
+                Log.d(TAG, "licenseKey = " + licenseKey);
+                final boolean success = initializeDeepAR(licenseKey);
+                if (success) {
+                    setCameraXChannel();
+                }
+                result.success(true);
+                break;
+
+            case MethodStrings.switchEffect: // Switch Effect
+                int effectIndex = ((Number) arguments.get(MethodStrings.effect)).intValue();
+                deepAR.switchEffect("effect", deepArEffects.getFilterPath(effectIndex));
+                result.success("Effect Changed");
+                break;
+
+        }
+    }
+
+    private void setCameraXChannel() {
+        cameraXChannel = new MethodChannel(flutterPlugin.getBinaryMessenger(), MethodStrings.cameraXChannel);
+        CameraXHandler handler = new CameraXHandler(activity,
+                textureId, deepAR);
+        cameraXChannel.setMethodCallHandler(handler);
+    }
+
+    @Override
+    public void onDetachedFromActivityForConfigChanges() {
+
+    }
+
+    @Override
+    public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding) {
+
+    }
+
+    @Override
+    public void onDetachedFromActivity() {
+        flutterPlugin = null;
+    }
 
 
-  @Override
-  public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
-    channel.setMethodCallHandler(null);
-  }
+    @Override
+    public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
+        flutterPlugin = flutterPluginBinding;
+    }
 
-  @Override
-  public void screenshotTaken(Bitmap bitmap) {
+    private boolean initializeDeepAR(String licenseKey) {
+        try {
+            deepAR = new DeepAR(activity);
+            deepAR.setLicenseKey(licenseKey);
+            deepAR.initialize(activity, this);
+            deepAR.changeLiveMode(true);
 
-  }
+            TextureRegistry.SurfaceTextureEntry entry = flutterPlugin.getTextureRegistry().createSurfaceTexture();
+            tempSurfaceTexture = entry.surfaceTexture();
+            tempSurfaceTexture.setDefaultBufferSize(1920, 1080);
+            surface = new Surface(tempSurfaceTexture);
+            deepAR.setRenderSurface(surface, 1920, 1080);
+            textureId = entry.id();
 
-  @Override
-  public void videoRecordingStarted() {
+            return true;
+        } catch (Exception e) {
+            Log.e(TAG, "ERROR" + e);
+            return false;
+        }
 
-  }
-
-  @Override
-  public void videoRecordingFinished() {
-
-  }
-
-  @Override
-  public void videoRecordingFailed() {
-
-  }
-
-  @Override
-  public void videoRecordingPrepared() {
-
-  }
-
-  @Override
-  public void shutdownFinished() {
-
-  }
-
-  @Override
-  public void initialized() {
-    Log.d(TAG, "initialized__: DEEP_AR");
-  }
-
-  @Override
-  public void faceVisibilityChanged(boolean b) {
-
-  }
-
-  @Override
-  public void imageVisibilityChanged(String s, boolean b) {
-
-  }
-
-  @Override
-  public void frameAvailable(Image image) {
-    Log.d(TAG, "frameAvailable: "+image.getHeight());
-  }
-
-  @Override
-  public void error(ARErrorType arErrorType, String s) {
-
-  }
-
-  @Override
-  public void effectSwitched(String s) {
-
-  }
-
-  MethodChannel cameraXChannel;
+    }
 
 
-  @Override
-  public void onAttachedToActivity(@NonNull ActivityPluginBinding binding) {
+    @Override
+    public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
+        channel.setMethodCallHandler(null);
+        cameraXChannel.setMethodCallHandler(null);
+    }
 
-    initializeDeepAR();
+    @Override
+    public void screenshotTaken(Bitmap bitmap) {
 
-    cameraXChannel = new MethodChannel(mFlutterPluginBinding.getBinaryMessenger(), "camerax");
+    }
 
-    CameraXHandler handler = new CameraXHandler(binding.getActivity(),
-            mFlutterPluginBinding.getTextureRegistry(),  deepAR , surface, textureId);
-    cameraXChannel.setMethodCallHandler(handler);
-  }
+    @Override
+    public void videoRecordingStarted() {
 
-  @Override
-  public void onDetachedFromActivityForConfigChanges() {
+    }
 
-  }
+    @Override
+    public void videoRecordingFinished() {
 
-  @Override
-  public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding) {
+    }
 
-  }
+    @Override
+    public void videoRecordingFailed() {
 
-  @Override
-  public void onDetachedFromActivity() {
+    }
 
-  }
+    @Override
+    public void videoRecordingPrepared() {
+
+    }
+
+    @Override
+    public void shutdownFinished() {
+
+    }
+
+    @Override
+    public void initialized() {
+        Log.d(TAG, "initialized : DEEP_AR");
+    }
+
+    @Override
+    public void faceVisibilityChanged(boolean b) {
+
+    }
+
+    @Override
+    public void imageVisibilityChanged(String s, boolean b) {
+
+    }
+
+    @Override
+    public void frameAvailable(Image image) {
+    }
+
+    @Override
+    public void error(ARErrorType arErrorType, String s) {
+
+    }
+
+    @Override
+    public void effectSwitched(String s) {
+
+    }
 }
