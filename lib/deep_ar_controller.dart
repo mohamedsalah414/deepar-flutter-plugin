@@ -15,18 +15,22 @@ class DeepArController {
   late Resolution resolution;
 
   bool get isInitialized => textureId != null;
+  bool isPermission = false;
   double get aspectRatio => _aspectRatio;
 
   Future<void> initialize(
       {required String licenseKey, required Resolution preset}) async {
     resolution = preset;
-    String? dimensions =
-        await _deepArPlatformHandler.initialize(licenseKey, preset);
-    if (dimensions != null) {
-      width = double.parse(dimensions.split(" ")[0]);
-      height = double.parse(dimensions.split(" ")[1]);
-      _aspectRatio = width! / height!;
-      textureId = await _deepArPlatformHandler.startCamera();
+    isPermission = await _deepArPlatformHandler.checkAllPermission() ?? false;
+    if (isPermission) {
+      String? dimensions =
+          await _deepArPlatformHandler.initialize(licenseKey, preset);
+      if (dimensions != null) {
+        width = double.parse(dimensions.split(" ")[0]);
+        height = double.parse(dimensions.split(" ")[1]);
+        _aspectRatio = width! / height!;
+        textureId = await _deepArPlatformHandler.startCamera();
+      }
     }
   }
 
@@ -36,25 +40,6 @@ class DeepArController {
 
   Future<String?> switchEffect(int effect) {
     return _deepArPlatformHandler.switchEffect(effect);
-  }
-
-  Future<String> _getSaveDir() async {
-    String _localPath =
-        (await _findLocalPath())! + Platform.pathSeparator + 'Download';
-
-    final savedDir = Directory(_localPath);
-    bool hasExisted = await savedDir.exists();
-    if (!hasExisted) {
-      savedDir.create();
-    }
-    return _localPath;
-  }
-
-  Future<String?> _findLocalPath() async {
-    final directory = Platform.isAndroid
-        ? await getExternalStorageDirectory()
-        : await getApplicationDocumentsDirectory();
-    return directory?.path;
   }
 
   Future<void> startVideoRecording() async {
