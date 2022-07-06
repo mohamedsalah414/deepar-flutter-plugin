@@ -54,13 +54,35 @@ class _HomeState extends State<Home> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
+    _controller = DeepArController();
+    initializeDeepAr();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _controller.isInitialized
+        ? Stack(
+            children: [
+              DeepArPreview(_controller),
+              _bottomButtons(),
+            ],
+          )
+        : Center(
+            child: ElevatedButton(
+                onPressed: () {
+                  initializeDeepAr();
+                },
+                child: const Text("Click here to update permission status")),
+          );
+  }
+
+  void initializeDeepAr() {
     var mediaQuery = MediaQuery.of(context);
     int pixelWidth =
         (mediaQuery.size.width * mediaQuery.devicePixelRatio).toInt();
     int pixelHeight =
         (mediaQuery.size.height * mediaQuery.devicePixelRatio).toInt();
 
-    _controller = DeepArController();
     _controller
         .initialize(
             licenseKey:
@@ -71,60 +93,52 @@ class _HomeState extends State<Home> {
         .then((value) => setState(() {}));
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        _controller.isInitialized
-            ? DeepArPreview(_controller)
-            : const SizedBox.shrink(),
-        Positioned(
-          bottom: 0,
-          right: 0,
-          left: 0,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                IconButton(
-                    iconSize: 60,
-                    onPressed: () {
-                      _controller.switchEffect(Random().nextInt(15));
-                    },
-                    icon: const Icon(
-                      Icons.arrow_back_ios,
-                      color: Colors.white70,
-                    )),
-                ElevatedButton(
-                    onPressed: () {
-                      if (isRecording) {
-                        _controller.stopVideoRecording();
-                        isRecording = false;
-                      } else {
-                        _controller.startVideoRecording();
-                        isRecording = true;
-                      }
+  Positioned _bottomButtons() {
+    return Positioned(
+      bottom: 0,
+      right: 0,
+      left: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(
+                iconSize: 60,
+                onPressed: () {
+                  _controller.switchEffect(Random().nextInt(15));
+                },
+                icon: const Icon(
+                  Icons.arrow_back_ios,
+                  color: Colors.white70,
+                )),
+            ElevatedButton(
+                onPressed: () {
+                  if (isRecording) {
+                    _controller.stopVideoRecording();
+                    isRecording = false;
+                  } else {
+                    _controller.startVideoRecording();
+                    isRecording = true;
+                  }
 
-                      setState(() {});
-                    },
-                    child: Text(
-                        isRecording ? "Stop Recording" : "Start Recording")),
-                IconButton(
-                    iconSize: 60,
-                    onPressed: () {
-                      _controller.switchEffect(Random().nextInt(15));
-                    },
-                    icon: const Icon(
-                      Icons.arrow_forward_ios,
-                      color: Colors.white70,
-                    )),
-              ],
-            ),
-          ),
+                  setState(() {});
+                },
+                child:
+                    Text(isRecording ? "Stop Recording" : "Start Recording")),
+            IconButton(
+                iconSize: 60,
+                onPressed: () {
+                  _controller.switchEffect(Random().nextInt(15));
+                },
+                icon: const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white70,
+                )),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

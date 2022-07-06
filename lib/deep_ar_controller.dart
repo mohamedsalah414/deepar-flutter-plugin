@@ -11,17 +11,24 @@ class DeepArController {
   late Resolution resolution;
 
   bool get isInitialized => textureId != null;
+  late bool isPermission;
 
   Future<void> initialize(
-      {required String licenseKey, required Resolution preset, required int width, required int height}) async {
+      {required String licenseKey,
+      required Resolution preset,
+      required int width,
+      required int height}) async {
     resolution = preset;
-    bool? isInitialized = await _deepArPlatformHandler.initialize(
-        licenseKey, width, height);
-    if (isInitialized != null && isInitialized) {
-      textureId = await _deepArPlatformHandler.startCamera();
+
+    isPermission = await _deepArPlatformHandler.checkAllPermission() ?? false;
+    if (isPermission) {
+      bool? isInitialized =
+          await _deepArPlatformHandler.initialize(licenseKey, width, height);
+      if (isInitialized != null && isInitialized) {
+        textureId = await _deepArPlatformHandler.startCamera();
+      }
     }
   }
-  
 
   Widget buildPreview() {
     return Texture(textureId: textureId!);
@@ -31,7 +38,6 @@ class DeepArController {
     return _deepArPlatformHandler.switchEffect(effect);
   }
 
-  
   Future<void> startVideoRecording() async {
     //final Directory directory = await getApplicationDocumentsDirectory();
     Directory dir = Directory('/storage/emulated/0/Download');
@@ -45,7 +51,6 @@ class DeepArController {
     await file.create();
     _deepArPlatformHandler.startRecordingVideo(file.path);
   }
-
 
   void stopVideoRecording() {
     _deepArPlatformHandler.stopRecordingVideo();
