@@ -33,7 +33,11 @@ class _MyAppState extends State<MyApp> {
     CameraDescription front = widget.cameras.firstWhere(
         (camera) => camera.lensDirection == CameraLensDirection.front);
     _controller = DeepArController();
-    _controller.initialize().then((value) => setState(() {}));
+    _controller
+        .initialize(
+            licenseKey:
+                "53de9b68021fd5be051ddd80c8d1aee5653eda7cabcd58776c1a96e5027f4a8c78d4946795ccd944")
+        .then((value) => setState(() {}));
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
