@@ -12,61 +12,14 @@ class DeepArPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return deepArController.value.isInitialized
-        ? ValueListenableBuilder<CameraValue>(
-            valueListenable: deepArController,
-            builder: (BuildContext context, Object? value, Widget? child) {
-              return AspectRatio(
-                aspectRatio: _isLandscape()
-                    ? deepArController.value.aspectRatio
-                    : (1 / deepArController.value.aspectRatio),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: <Widget>[
-                    _wrapInRotatedBox(child: deepArController.buildPreview()),
-                    child ?? Container(),
-                  ],
-                ),
-              );
-            },
-            child: child,
+    return deepArController.isInitialized
+        ? Stack(
+            fit: StackFit.expand,
+            children: <Widget>[
+              SizedBox(height: 720, child: deepArController.buildPreview()),
+              child ?? Container(),
+            ],
           )
         : Container();
-  }
-
-  Widget _wrapInRotatedBox({required Widget child}) {
-    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
-      return child;
-    }
-
-    return RotatedBox(
-      quarterTurns: _getQuarterTurns(),
-      child: child,
-    );
-  }
-
-  bool _isLandscape() {
-    return <DeviceOrientation>[
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight
-    ].contains(_getApplicableOrientation());
-  }
-
-  int _getQuarterTurns() {
-    final Map<DeviceOrientation, int> turns = <DeviceOrientation, int>{
-      DeviceOrientation.portraitUp: 0,
-      DeviceOrientation.landscapeRight: 1,
-      DeviceOrientation.portraitDown: 2,
-      DeviceOrientation.landscapeLeft: 3,
-    };
-    return turns[_getApplicableOrientation()]!;
-  }
-
-  DeviceOrientation _getApplicableOrientation() {
-    return deepArController.value.isRecordingVideo
-        ? deepArController.value.recordingOrientation!
-        : (deepArController.value.previewPauseOrientation ??
-            deepArController.value.lockedCaptureOrientation ??
-            deepArController.value.deviceOrientation);
   }
 }
