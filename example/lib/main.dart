@@ -52,13 +52,7 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     _controller = DeepArController();
-    _controller
-        .initialize(
-          licenseKey:
-              "53de9b68021fd5be051ddd80c8d1aee5653eda7cabcd58776c1a96e5027f4a8c78d4946795ccd944",
-          preset: Resolution.high,
-        )
-        .then((value) => setState(() {}));
+    initializeDeepAr();
     super.initState();
   }
 
@@ -69,55 +63,36 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: initializeDeepAr(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: Text("Loading..."),
+    return _controller.isPermission
+        ? Stack(
+            children: [
+              _controller.isInitialized
+                  ? DeepArPreview(_controller)
+                  : const Center(
+                      child: Text(
+                          "Something went wrong while initializing DeepAR"),
+                    ),
+              _bottomButtons(),
+            ],
+          )
+        : Center(
+            child: ElevatedButton(
+                onPressed: () async {
+                  await initializeDeepAr();
+                  setState(() {});
+                },
+                child: const Text("Click here to update permission status")),
           );
-        }
-
-        return _controller.isPermission
-            ? Stack(
-                children: [
-                  _controller.isInitialized
-                      ? DeepArPreview(_controller)
-                      : const Center(
-                          child: Text(
-                              "Something went wrong while initializing DeepAR"),
-                        ),
-                  _bottomButtons(),
-                ],
-              )
-            : Center(
-                child: ElevatedButton(
-                    onPressed: () async {
-                      await initializeDeepAr();
-                      setState(() {});
-                    },
-                    child:
-                        const Text("Click here to update permission status")),
-              );
-      },
-    );
   }
 
   Future<void> initializeDeepAr() async {
-    if (!_controller.isInitialized) {
-      var mediaQuery = MediaQuery.of(context);
-      int pixelWidth =
-          (mediaQuery.size.width * mediaQuery.devicePixelRatio).toInt();
-      int pixelHeight =
-          (mediaQuery.size.height * mediaQuery.devicePixelRatio).toInt();
-
-      await _controller.initialize(
+    await _controller
+        .initialize(
           licenseKey:
               "53de9b68021fd5be051ddd80c8d1aee5653eda7cabcd58776c1a96e5027f4a8c78d4946795ccd944",
           preset: Resolution.high,
-          width: pixelWidth,
-          height: pixelHeight);
-    }
+        )
+        .then((value) => setState(() {}));
   }
 
   Positioned _bottomButtons() {
