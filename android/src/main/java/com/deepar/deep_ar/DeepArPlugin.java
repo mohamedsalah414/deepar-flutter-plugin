@@ -143,8 +143,8 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
     private boolean initializeDeepAR(String licenseKey, CameraResolutionPreset resolutionPreset) {
         try {
 
-            int width = resolutionPreset.getWidth();
-            int height = resolutionPreset.getHeight();
+            int width = resolutionPreset.getHeight();
+            int height = resolutionPreset.getWidth();
             deepAR = new DeepAR(activity);
             deepAR.setLicenseKey(licenseKey);
             deepAR.initialize(activity, this);
