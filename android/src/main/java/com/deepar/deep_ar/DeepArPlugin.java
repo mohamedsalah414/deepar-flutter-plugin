@@ -13,6 +13,7 @@ import java.util.Map;
 
 import ai.deepar.ar.ARErrorType;
 import ai.deepar.ar.AREventListener;
+import ai.deepar.ar.CameraResolutionPreset;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
@@ -68,8 +69,11 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
         switch (call.method) {
             case MethodStrings.initialize: // Initialize
                 String licenseKey = (String) arguments.get(MethodStrings.licenseKey);
+                String resolution = (String) arguments.get(MethodStrings.resolution);
+                int width = ((Number) arguments.get("width")).intValue();
+                int height = ((Number) arguments.get("height")).intValue();
                 Log.d(TAG, "licenseKey = " + licenseKey);
-                final boolean success = initializeDeepAR(licenseKey);
+                final boolean success = initializeDeepAR(licenseKey, width, height);
                 if (success) {
                     setCameraXChannel();
                 }
@@ -113,7 +117,7 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
         flutterPlugin = flutterPluginBinding;
     }
 
-    private boolean initializeDeepAR(String licenseKey) {
+    private boolean initializeDeepAR(String licenseKey, int width, int height) {
         try {
             deepAR = new DeepAR(activity);
             deepAR.setLicenseKey(licenseKey);
@@ -122,9 +126,9 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
 
             TextureRegistry.SurfaceTextureEntry entry = flutterPlugin.getTextureRegistry().createSurfaceTexture();
             tempSurfaceTexture = entry.surfaceTexture();
-            tempSurfaceTexture.setDefaultBufferSize(1920, 1080);
+            tempSurfaceTexture.setDefaultBufferSize(width, height);
             surface = new Surface(tempSurfaceTexture);
-            deepAR.setRenderSurface(surface, 1920, 1080);
+            deepAR.setRenderSurface(surface, width, height);
             textureId = entry.id();
 
             return true;
