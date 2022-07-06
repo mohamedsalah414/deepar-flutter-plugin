@@ -11,7 +11,7 @@ class DeepArController {
   late Resolution resolution;
 
   bool get isInitialized => textureId != null;
-  late bool isPermission;
+  bool isPermission = false;
 
   Future<void> initialize(
       {required String licenseKey,
