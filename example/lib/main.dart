@@ -49,35 +49,35 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   late final DeepArController _controller;
   bool isRecording = false;
+  @override
+  void initState() {
+    _controller = DeepArController();
+    _controller
+        .initialize(
+          licenseKey:
+              "53de9b68021fd5be051ddd80c8d1aee5653eda7cabcd58776c1a96e5027f4a8c78d4946795ccd944",
+          preset: Resolution.high,
+        )
+        .then((value) => setState(() {}));
+    super.initState();
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
-    var mediaQuery = MediaQuery.of(context);
-    int pixelWidth =
-        (mediaQuery.size.width * mediaQuery.devicePixelRatio).toInt();
-    int pixelHeight =
-        (mediaQuery.size.height * mediaQuery.devicePixelRatio).toInt();
-
-    _controller = DeepArController();
-    _controller
-        .initialize(
-            licenseKey:
-                "53de9b68021fd5be051ddd80c8d1aee5653eda7cabcd58776c1a96e5027f4a8c78d4946795ccd944",
-            preset: Resolution.high,
-            width: pixelWidth,
-            height: pixelHeight)
-        .then((value) => setState(() {}));
   }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        _controller.isInitialized
-            ? DeepArPreview(_controller)
-            : const SizedBox.shrink(),
+        Container(
+          width: 360,
+          color: Colors.red,
+          child: _controller.isInitialized
+              ? DeepArPreview(_controller)
+              : const SizedBox.shrink(),
+        ),
         Positioned(
           bottom: 0,
           right: 0,

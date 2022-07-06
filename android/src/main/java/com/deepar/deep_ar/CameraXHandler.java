@@ -26,10 +26,11 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 
 public class CameraXHandler implements MethodChannel.MethodCallHandler {
-    CameraXHandler(Activity activity, long textureId, DeepAR deepAR) {
+    CameraXHandler(Activity activity, long textureId, DeepAR deepAR, CameraResolutionPreset cameraResolutionPreset) {
         this.activity = activity;
         this.deepAR = deepAR;
         this.textureId = textureId;
+        this.resolutionPreset = cameraResolutionPreset;
     }
 
     final private Activity activity;
@@ -39,6 +40,8 @@ public class CameraXHandler implements MethodChannel.MethodCallHandler {
     private ByteBuffer[] buffers;
     private int currentBuffer = 0;
     private static final int NUMBER_OF_BUFFERS = 2;
+    private final CameraResolutionPreset resolutionPreset;
+
 
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
@@ -50,7 +53,7 @@ public class CameraXHandler implements MethodChannel.MethodCallHandler {
     private void startNative(MethodCall call, MethodChannel.Result result) {
         final ListenableFuture<ProcessCameraProvider> future = ProcessCameraProvider.getInstance(activity);
         Executor executor = ContextCompat.getMainExecutor(activity);
-        CameraResolutionPreset resolutionPreset = CameraResolutionPreset.P1920x1080;
+
         int width = resolutionPreset.getWidth();
         int height = resolutionPreset.getHeight();
         buffers = new ByteBuffer[NUMBER_OF_BUFFERS];

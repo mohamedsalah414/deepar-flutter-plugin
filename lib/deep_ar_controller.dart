@@ -3,25 +3,32 @@ import 'dart:math';
 import 'package:deep_ar/deep_ar_platform_handler.dart';
 import 'package:deep_ar/resolution_preset.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
 class DeepArController {
   DeepArController() : super();
   final DeepArPlatformHandler _deepArPlatformHandler = DeepArPlatformHandler();
   int? textureId;
+  double? height;
+  double? width;
+  double _aspectRatio = 1.0;
   late Resolution resolution;
 
   bool get isInitialized => textureId != null;
+  double get aspectRatio => _aspectRatio;
 
   Future<void> initialize(
-      {required String licenseKey, required Resolution preset, required int width, required int height}) async {
+      {required String licenseKey, required Resolution preset}) async {
     resolution = preset;
-    bool? isInitialized = await _deepArPlatformHandler.initialize(
-        licenseKey, width, height);
-    if (isInitialized != null && isInitialized) {
+    String? dimensions =
+        await _deepArPlatformHandler.initialize(licenseKey, preset);
+    if (dimensions != null) {
+      width = double.parse(dimensions.split(" ")[0]);
+      height = double.parse(dimensions.split(" ")[1]);
+      _aspectRatio = width! / height!;
       textureId = await _deepArPlatformHandler.startCamera();
     }
   }
-  
 
   Widget buildPreview() {
     return Texture(textureId: textureId!);
@@ -31,9 +38,26 @@ class DeepArController {
     return _deepArPlatformHandler.switchEffect(effect);
   }
 
-  
+  Future<String> _getSaveDir() async {
+    String _localPath =
+        (await _findLocalPath())! + Platform.pathSeparator + 'Download';
+
+    final savedDir = Directory(_localPath);
+    bool hasExisted = await savedDir.exists();
+    if (!hasExisted) {
+      savedDir.create();
+    }
+    return _localPath;
+  }
+
+  Future<String?> _findLocalPath() async {
+    final directory = Platform.isAndroid
+        ? await getExternalStorageDirectory()
+        : await getApplicationDocumentsDirectory();
+    return directory?.path;
+  }
+
   Future<void> startVideoRecording() async {
-    //final Directory directory = await getApplicationDocumentsDirectory();
     Directory dir = Directory('/storage/emulated/0/Download');
     var r = Random();
 
@@ -45,7 +69,6 @@ class DeepArController {
     await file.create();
     _deepArPlatformHandler.startRecordingVideo(file.path);
   }
-
 
   void stopVideoRecording() {
     _deepArPlatformHandler.stopRecordingVideo();
