@@ -1,4 +1,5 @@
 import 'package:deep_ar/deep_ar_controller.dart';
+import 'package:deep_ar/resolution_preset.dart';
 import 'package:flutter/material.dart';
 
 class DeepArPreview extends StatelessWidget {
@@ -9,14 +10,13 @@ class DeepArPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    DeepArResolution resolution = DeepArResolution(deepArController.resolution);
+    int width = resolution.width;
+    int height = resolution.height;
+    
     return deepArController.isInitialized
-        ? Stack(
-            fit: StackFit.expand,
-            children: <Widget>[
-              SizedBox(height: 720, child: deepArController.buildPreview()),
-              child ?? Container(),
-            ],
-          )
+        ?
+        deepArController.buildPreview()
         : Container();
   }
 }

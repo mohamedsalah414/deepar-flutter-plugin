@@ -12,4 +12,5 @@ class PlatformStrings {
   // Method arguments
   static const String licenseKey = "license_key";
   static const String effect = "effect";
+  static const String resolution = "resolution";
 }

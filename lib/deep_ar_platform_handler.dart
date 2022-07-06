@@ -14,9 +14,11 @@ class DeepArPlatformHandler {
     return version;
   }
 
-  Future<bool?> initialize(String licenseKey) async {
+  Future<bool?> initialize(String licenseKey, int width, int height) async {
     return await _channel.invokeMethod<bool?>(PlatformStrings.initialize, {
       PlatformStrings.licenseKey: licenseKey,
+      "width": width,
+      "height": height,
     });
   }
 

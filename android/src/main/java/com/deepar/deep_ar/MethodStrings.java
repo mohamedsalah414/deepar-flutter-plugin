@@ -15,6 +15,7 @@ public  class MethodStrings {
     // Method arguments
     public final static  String licenseKey = "license_key";
     public final static  String effect = "effect";
+    public final static  String resolution = "resolution";
 
 
 }

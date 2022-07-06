@@ -1,12 +1,10 @@
 import 'package:camera/camera.dart';
 import 'package:deep_ar/deep_ar_controller.dart';
 import 'package:flutter/material.dart';
-import 'dart:async';
-
-import 'package:flutter/services.dart';
 import 'package:deep_ar/deep_ar.dart';
 
 import 'dart:math';
+import 'package:deep_ar/resolution_preset.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,43 +21,9 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
-  late final DeepArController _controller;
   @override
   void initState() {
     super.initState();
-    // initPlatformState();
-
-    CameraDescription front = widget.cameras.firstWhere(
-        (camera) => camera.lensDirection == CameraLensDirection.front);
-    _controller = DeepArController();
-    _controller
-        .initialize(
-            licenseKey:
-                "53de9b68021fd5be051ddd80c8d1aee5653eda7cabcd58776c1a96e5027f4a8c78d4946795ccd944")
-        .then((value) => setState(() {}));
-  }
-
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    String platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    // We also handle the message potentially returning null.
-    try {
-      platformVersion =
-          await DeepAr.platformVersion ?? 'Unknown platform version';
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
-    }
-
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-
-    setState(() {
-      _platformVersion = platformVersion;
-    });
   }
 
   @override
@@ -67,30 +31,87 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('Plugin example app'),
+          title: const Text('DeepAR Flutter Plugin'),
         ),
-        body: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Center(
-              child: Text('Running on: $_platformVersion\n'),
-            ),
-            _controller.isInitialized
-                ? SizedBox(height: 500, child: DeepArPreview(_controller))
-                : SizedBox.shrink(),
-            const SizedBox(height: 20),
-            Row(
+        body: const Home(),
+      ),
+    );
+  }
+}
+
+class Home extends StatefulWidget {
+  const Home({Key? key}) : super(key: key);
+
+  @override
+  State<Home> createState() => _HomeState();
+}
+
+class _HomeState extends State<Home> {
+  late final DeepArController _controller;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    var mediaQuery = MediaQuery.of(context);
+    int pixelWidth =
+        (mediaQuery.size.width * mediaQuery.devicePixelRatio).toInt();
+    int pixelHeight =
+        (mediaQuery.size.height * mediaQuery.devicePixelRatio).toInt();
+
+    _controller = DeepArController();
+    _controller
+        .initialize(
+            licenseKey:
+                "53de9b68021fd5be051ddd80c8d1aee5653eda7cabcd58776c1a96e5027f4a8c78d4946795ccd944",
+            preset: Resolution.high,
+            width: pixelWidth,
+            height: pixelHeight)
+        .then((value) => setState(() {}));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        _controller.isInitialized
+            ? DeepArPreview(_controller)
+            : const SizedBox.shrink(),
+        Positioned(
+          bottom: 0,
+          right: 0,
+          left: 0,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                ElevatedButton(
+                IconButton(
+                    iconSize: 60,
                     onPressed: () {
-                      _controller.switchEffect(Random().nextInt(10));
+                      _controller.switchEffect(Random().nextInt(15));
                     },
-                    child: const Text("Switch Effect")),
+                    icon: const Icon(
+                      Icons.arrow_back_ios,
+                      color: Colors.white70,
+                    )),
+                ElevatedButton(
+                    onPressed: () {}, child: const Text("Switch Effect")),
+                IconButton(
+                    iconSize: 60,
+                    onPressed: () {
+                      _controller.switchEffect(Random().nextInt(15));
+                    },
+                    icon: const Icon(
+                      Icons.arrow_forward_ios,
+                      color: Colors.white70,
+                    )),
               ],
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }

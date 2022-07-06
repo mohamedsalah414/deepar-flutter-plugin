@@ -33,7 +33,7 @@ public class CameraXHandler implements MethodChannel.MethodCallHandler {
     }
 
     final private Activity activity;
-    private final DeepAR deepAR;
+    final private DeepAR deepAR;
     private final long textureId;
     private ProcessCameraProvider processCameraProvider;
     private ByteBuffer[] buffers;
@@ -50,10 +50,14 @@ public class CameraXHandler implements MethodChannel.MethodCallHandler {
     private void startNative(MethodCall call, MethodChannel.Result result) {
         final ListenableFuture<ProcessCameraProvider> future = ProcessCameraProvider.getInstance(activity);
         Executor executor = ContextCompat.getMainExecutor(activity);
-        CameraResolutionPreset cameraResolutionPreset = CameraResolutionPreset.P1920x1080;
+        CameraResolutionPreset resolutionPreset = CameraResolutionPreset.P1920x1080;
+        int width = resolutionPreset.getWidth();
+        int height = resolutionPreset.getHeight();
         buffers = new ByteBuffer[NUMBER_OF_BUFFERS];
         for (int i = 0; i < NUMBER_OF_BUFFERS; i++) {
-            buffers[i] = ByteBuffer.allocateDirect(cameraResolutionPreset.getWidth() * cameraResolutionPreset.getHeight() * 3);
+            buffers[i] = ByteBuffer.allocateDirect
+                    (CameraResolutionPreset.P1920x1080.getWidth()
+                            * CameraResolutionPreset.P1920x1080.getHeight() * 3);
             buffers[i].order(ByteOrder.nativeOrder());
             buffers[i].position(0);
         }
@@ -63,7 +67,7 @@ public class CameraXHandler implements MethodChannel.MethodCallHandler {
             public void run() {
                 try {
                     processCameraProvider = future.get();
-                    Size cameraResolution = new Size(cameraResolutionPreset.getWidth(), cameraResolutionPreset.getHeight());
+                    Size cameraResolution = new Size(width, height);
                     ImageAnalysis.Analyzer analyzer = new ImageAnalysis.Analyzer() {
                         @Override
                         public void analyze(@NonNull ImageProxy image) {
@@ -87,8 +91,7 @@ public class CameraXHandler implements MethodChannel.MethodCallHandler {
                             buffers[currentBuffer].position(0);
                             if (deepAR != null) {
                                 try {
-
-                                    Log.d("FRAMES", "frames__analyze: ");
+                                    Log.d("FRAMES__", width + " * " + height);
                                     deepAR.receiveFrame(buffers[currentBuffer],
                                             image.getWidth(), image.getHeight(),
                                             image.getImageInfo().getRotationDegrees(),
@@ -115,6 +118,7 @@ public class CameraXHandler implements MethodChannel.MethodCallHandler {
                             .build();
 
                     imageAnalysis.setAnalyzer(executor, analyzer);
+                    processCameraProvider.unbindAll();
 
                     processCameraProvider.bindToLifecycle((LifecycleOwner) activity,
                             CameraSelector.DEFAULT_FRONT_CAMERA, imageAnalysis);
