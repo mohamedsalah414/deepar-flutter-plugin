@@ -48,70 +48,99 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   late final DeepArController _controller;
+  bool isRecording = false;
+  @override
+  void initState() {
+    _controller = DeepArController();
+    initializeDeepAr();
+    super.initState();
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
-    var mediaQuery = MediaQuery.of(context);
-    int pixelWidth =
-        (mediaQuery.size.width * mediaQuery.devicePixelRatio).toInt();
-    int pixelHeight =
-        (mediaQuery.size.height * mediaQuery.devicePixelRatio).toInt();
-
-    _controller = DeepArController();
-    _controller
-        .initialize(
-            licenseKey:
-                "53de9b68021fd5be051ddd80c8d1aee5653eda7cabcd58776c1a96e5027f4a8c78d4946795ccd944",
-            preset: Resolution.high,
-            width: pixelWidth,
-            height: pixelHeight)
-        .then((value) => setState(() {}));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        _controller.isInitialized
-            ? DeepArPreview(_controller)
-            : const SizedBox.shrink(),
-        Positioned(
-          bottom: 0,
-          right: 0,
-          left: 0,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                IconButton(
-                    iconSize: 60,
-                    onPressed: () {
-                      _controller.switchEffect(Random().nextInt(15));
-                    },
-                    icon: const Icon(
-                      Icons.arrow_back_ios,
-                      color: Colors.white70,
-                    )),
-                ElevatedButton(
-                    onPressed: () {}, child: const Text("Switch Effect")),
-                IconButton(
-                    iconSize: 60,
-                    onPressed: () {
-                      _controller.switchEffect(Random().nextInt(15));
-                    },
-                    icon: const Icon(
-                      Icons.arrow_forward_ios,
-                      color: Colors.white70,
-                    )),
-              ],
-            ),
-          ),
+    return _controller.isPermission
+        ? Stack(
+            children: [
+              _controller.isInitialized
+                  ? DeepArPreview(_controller)
+                  : const Center(
+                      child: Text(
+                          "Something went wrong while initializing DeepAR"),
+                    ),
+              _bottomButtons(),
+            ],
+          )
+        : Center(
+            child: ElevatedButton(
+                onPressed: () async {
+                  await initializeDeepAr();
+                  setState(() {});
+                },
+                child: const Text("Click here to update permission status")),
+          );
+  }
+
+  Future<void> initializeDeepAr() async {
+    await _controller
+        .initialize(
+          licenseKey:
+              "53de9b68021fd5be051ddd80c8d1aee5653eda7cabcd58776c1a96e5027f4a8c78d4946795ccd944",
+          preset: Resolution.high,
+        )
+        .then((value) => setState(() {}));
+  }
+
+  Positioned _bottomButtons() {
+    return Positioned(
+      bottom: 0,
+      right: 0,
+      left: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(
+                iconSize: 60,
+                onPressed: () {
+                  _controller.switchEffect(Random().nextInt(15));
+                },
+                icon: const Icon(
+                  Icons.arrow_back_ios,
+                  color: Colors.white70,
+                )),
+            ElevatedButton(
+                onPressed: () {
+                  if (isRecording) {
+                    _controller.stopVideoRecording();
+                    isRecording = false;
+                  } else {
+                    _controller.startVideoRecording();
+                    isRecording = true;
+                  }
+
+                  setState(() {});
+                },
+                child:
+                    Text(isRecording ? "Stop Recording" : "Start Recording")),
+            IconButton(
+                iconSize: 60,
+                onPressed: () {
+                  _controller.switchEffect(Random().nextInt(15));
+                },
+                icon: const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white70,
+                )),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

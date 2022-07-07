@@ -1,14 +1,24 @@
 package com.deepar.deep_ar;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.media.Image;
+import android.os.Build;
 import android.util.Log;
 import android.view.Surface;
+import android.widget.Toast;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Map;
 
 import ai.deepar.ar.ARErrorType;
@@ -22,13 +32,14 @@ import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 
+import io.flutter.plugin.common.PluginRegistry;
 import io.flutter.view.TextureRegistry;
 import ai.deepar.ar.DeepAR;
 
 /**
  * DeepArPlugin
  */
-public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAware {
+public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAware, PluginRegistry.RequestPermissionsResultListener {
     /// The MethodChannel that will the communication between Flutter and native Android
     ///
     /// This local reference serves to register the plugin with the Flutter Engine and unregister it
@@ -44,13 +55,35 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
     private FlutterPluginBinding flutterPlugin;
     private SurfaceTexture tempSurfaceTexture;
 
+    private CameraResolutionPreset resolutionPreset;
+
 
     @Override
     public void onAttachedToActivity(@NonNull ActivityPluginBinding binding) {
 
+        onActivityAttached(binding);
+    }
+
+
+    private void onActivityAttached(@NonNull ActivityPluginBinding binding) {
         activity = binding.getActivity();
         deepArEffects = new DeepArEffects();
         setDeepArMethodChannel();
+        binding.addRequestPermissionsResultListener(this);
+    }
+
+    private boolean checkPermission(){
+        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO},
+                    1);
+            return false;
+        } else {
+            // Permission has already been granted
+            return true;
+        }
     }
 
     private void setDeepArMethodChannel() {
@@ -67,17 +100,29 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
         Map<String, Object> arguments = (Map<String, Object>) call.arguments;
 
         switch (call.method) {
+            case MethodStrings.checkAllPermission: // Check permission
+                boolean permission = checkPermission();
+                result.success(permission);
+                break;
             case MethodStrings.initialize: // Initialize
                 String licenseKey = (String) arguments.get(MethodStrings.licenseKey);
                 String resolution = (String) arguments.get(MethodStrings.resolution);
-                int width = ((Number) arguments.get("width")).intValue();
-                int height = ((Number) arguments.get("height")).intValue();
+
+                if(resolution.equals("veryHigh"))
+                    resolutionPreset = CameraResolutionPreset.P1920x1080;
+                 else if(resolution.equals("high"))
+                    resolutionPreset = CameraResolutionPreset.P1280x720;
+                 else if(resolution.equals("medium"))
+                    resolutionPreset = CameraResolutionPreset.P640x480;
+                 else
+                    resolutionPreset = CameraResolutionPreset.P640x360;
+
                 Log.d(TAG, "licenseKey = " + licenseKey);
-                final boolean success = initializeDeepAR(licenseKey, width, height);
+                final boolean success = initializeDeepAR(licenseKey, resolutionPreset);
                 if (success) {
-                    setCameraXChannel();
+                    setCameraXChannel(resolutionPreset);
                 }
-                result.success(true);
+                result.success("" + resolutionPreset.getWidth() + " " + resolutionPreset.getHeight());
                 break;
 
             case MethodStrings.switchEffect: // Switch Effect
@@ -86,13 +131,21 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                 result.success("Effect Changed");
                 break;
 
+            case MethodStrings.startRecordingVideo:
+                String filePath = ((String) arguments.get("file_path")).toString();
+                deepAR.startVideoRecording(filePath);
+                break;
+
+            case MethodStrings.stopRecordingVideo:
+                deepAR.stopVideoRecording();
+                break;
         }
     }
 
-    private void setCameraXChannel() {
+    private void setCameraXChannel(CameraResolutionPreset resolutionPreset) {
         cameraXChannel = new MethodChannel(flutterPlugin.getBinaryMessenger(), MethodStrings.cameraXChannel);
-        CameraXHandler handler = new CameraXHandler(activity,
-                textureId, deepAR);
+        final CameraXHandler handler = new CameraXHandler(activity,
+                textureId, deepAR, resolutionPreset);
         cameraXChannel.setMethodCallHandler(handler);
     }
 
@@ -103,7 +156,7 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
 
     @Override
     public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding) {
-
+        onActivityAttached(binding);
     }
 
     @Override
@@ -117,8 +170,12 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
         flutterPlugin = flutterPluginBinding;
     }
 
-    private boolean initializeDeepAR(String licenseKey, int width, int height) {
+
+    private boolean initializeDeepAR(String licenseKey, CameraResolutionPreset resolutionPreset) {
         try {
+
+            int width = resolutionPreset.getHeight();
+            int height = resolutionPreset.getWidth();
             deepAR = new DeepAR(activity);
             deepAR.setLicenseKey(licenseKey);
             deepAR.initialize(activity, this);
@@ -138,7 +195,6 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
         }
 
     }
-
 
     @Override
     public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
@@ -203,5 +259,11 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
     @Override
     public void effectSwitched(String s) {
 
+    }
+
+    @Override
+    public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        Log.d(TAG, "onRequestPermissionsResult: "+requestCode);
+        return false;
     }
 }

@@ -7,6 +7,9 @@ class PlatformStrings {
   static const String initialize = "initialize";
   static const String switchEffect = "switch_effect";
   static const String startCamera = "start_camera";
+  static const String startRecordingVideo = "start_recording_video";
+  static const String stopRecordingVideo = "stop_recording_video";
+  static const String checkAllPermission = "check_all_permission";
   static const String dispose = "dispose";
 
   // Method arguments

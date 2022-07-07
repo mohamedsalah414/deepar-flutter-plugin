@@ -10,13 +10,11 @@ class DeepArPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    DeepArResolution resolution = DeepArResolution(deepArController.resolution);
-    int width = resolution.width;
-    int height = resolution.height;
-    
     return deepArController.isInitialized
-        ?
-        deepArController.buildPreview()
+        ? AspectRatio(
+            aspectRatio: 1 / deepArController.aspectRatio,
+            child: deepArController.buildPreview(),
+          )
         : Container();
   }
 }

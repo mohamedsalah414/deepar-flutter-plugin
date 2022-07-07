@@ -1,4 +1,5 @@
 import 'package:deep_ar/platform_strings.dart';
+import 'package:deep_ar/resolution_preset.dart';
 import 'package:flutter/services.dart';
 
 class DeepArCodec extends StandardMessageCodec {
@@ -6,20 +7,29 @@ class DeepArCodec extends StandardMessageCodec {
 }
 
 class DeepArPlatformHandler {
-  static const MethodChannel _channel = MethodChannel(PlatformStrings.generalChannel);
-  static const MethodChannel _cameraXChannel = MethodChannel(PlatformStrings.cameraXChannel);
+  static const MethodChannel _channel =
+      MethodChannel(PlatformStrings.generalChannel);
+  static const MethodChannel _cameraXChannel =
+      MethodChannel(PlatformStrings.cameraXChannel);
 
   static Future<String?> get platformVersion async {
     final String? version = await _channel.invokeMethod('getPlatformVersion');
     return version;
   }
 
-  Future<bool?> initialize(String licenseKey, int width, int height) async {
-    return await _channel.invokeMethod<bool?>(PlatformStrings.initialize, {
+  Future<String?> initialize(String licenseKey, Resolution resolution) {
+    return _channel.invokeMethod<String?>(PlatformStrings.initialize, {
       PlatformStrings.licenseKey: licenseKey,
-      "width": width,
-      "height": height,
+      "resolution": resolution.stringValue,
     });
+  }
+
+  Future<int> startCamera() async {
+    int texturedId =
+        await _cameraXChannel.invokeMethod(PlatformStrings.startCamera);
+    // ignore: avoid_print
+    print("TEXTURE_IDD $texturedId");
+    return texturedId;
   }
 
   Future<String?> switchEffect(int effect) {
@@ -28,10 +38,17 @@ class DeepArPlatformHandler {
     });
   }
 
-  Future<int> startCamera() async {
-    int texturedId = await _cameraXChannel.invokeMethod(PlatformStrings.startCamera);
-    // ignore: avoid_print
-    print("TEXTURE_IDD $texturedId");
-    return texturedId;
+  Future<void> startRecordingVideo(String filePath) async {
+    await _channel.invokeMethod(PlatformStrings.startRecordingVideo, {
+      'file_path': filePath,
+    });
+  }
+
+  Future<void> stopRecordingVideo() async {
+    await _channel.invokeMethod(PlatformStrings.stopRecordingVideo);
+  }
+
+  Future<bool?> checkAllPermission() async {
+    return await _channel.invokeMethod<bool?>(PlatformStrings.checkAllPermission);
   }
 }
