@@ -58,4 +58,13 @@ class DeepArController {
   void stopVideoRecording() {
     _deepArPlatformHandler.stopRecordingVideo();
   }
+
+  Future<String?> checkVersion() {
+    return _deepArPlatformHandler.checkVersion();
+  }
+
+  void createSurface() async {
+    textureId = await _deepArPlatformHandler.createSurface();
+    print("TEXTURE_ID : $textureId");
+  }
 }

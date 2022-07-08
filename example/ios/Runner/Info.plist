@@ -43,5 +43,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>DeepAR need to use your camera to show a preview.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>DeepAR need to use your microphone to record video.</string>
 </dict>
 </plist>
