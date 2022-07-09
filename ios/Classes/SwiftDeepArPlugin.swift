@@ -40,85 +40,113 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         if ("check_version" == call.method) {
             result("iOS " + UIDevice.current.systemVersion)
         }
+        if("check_all_permission" == call.method){
+            let isGranted:Bool = checkCameraPermission()
+            result(isGranted)
+        }
         
         if ("create_surface" == call.method) {
             textureId = registry.register(self)
+            
+            
+            setUpCamera(result: result)
+            
             //registry.textureFrameAvailable(textureId)
             //deepAr.changeLiveMode(true)
             
-            self.deepAr = DeepAR()
-            self.deepAr.delegate = self
-            deepAr.setLicenseKey("53de9b68021fd5be051ddd80c8d1aee5653eda7cabcd58776c1a96e5027f4a8c78d4946795ccd944")
-            deepAr.initialize()
+            //            self.deepAr = DeepAR()
+            //            self.deepAr.delegate = self
+            //            deepAr.setLicenseKey("53de9b68021fd5be051ddd80c8d1aee5653eda7cabcd58776c1a96e5027f4a8c78d4946795ccd944")
+            //            deepAr.initialize()
             
-            checkCameraPermission()
             
-            result(textureId)
+            
+            //result(textureId)
         }
         
     }
     
-    private func checkCameraPermission(){
+    private func checkCameraPermission() -> Bool{
+        var isGranted:Bool = false
         switch AVCaptureDevice.authorizationStatus(for: .video){
             
         case .notDetermined:
             // Request Permission
-            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+            AVCaptureDevice.requestAccess(for: .video) { granted in
                 guard granted else {
                     return
                 }
                 
-                DispatchQueue.main.async {
-                    self?.setUpCamera()
-                }
+                isGranted = true
+                //                DispatchQueue.main.async {
+                //                    self?.setUpCamera()
+                //                }
             }
         case .restricted:
             break
         case .denied:
             break
         case .authorized:
-            setUpCamera()
+            isGranted = true
         @unknown default:
             break
         }
+        
+        return isGranted
     }
     
-    private func setUpCamera(){
+    private func setUpCamera(result: @escaping FlutterResult){
         let session = AVCaptureSession()
-        if let device = AVCaptureDevice.default(for: .video)
+        let position = AVCaptureDevice.Position.front
+        if let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front)
         {
             do {
                 session.beginConfiguration()
-                 let input = try AVCaptureDeviceInput(device: device)
+                let input = try AVCaptureDeviceInput(device: device)
                 if session.canAddInput(input){
                     session.addInput(input)
                 }
                 
-//                if session.canAddOutput(output){
-//                    session.addOutput(output)
-//                }
+                //                if session.canAddOutput(output){
+                //                    session.addOutput(output)
+                //                }
                 
                 //previewLayer.videoGravity = .resizeAspectFill
                 //previewLayer.session = session
                 
                 
-                        videoOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
-                        videoOutput.alwaysDiscardsLateVideoFrames = true
-                        videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue.main)
+                videoOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
+                videoOutput.alwaysDiscardsLateVideoFrames = true
+                videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue.main)
+                
                 if session.canAddOutput(videoOutput){
                     session.addOutput(videoOutput)
+                }
+                
+                for connection in videoOutput.connections {
+                    connection.videoOrientation = .portrait
+                    if position == .front && connection.isVideoMirroringSupported {
+                        connection.isVideoMirrored = true
+                    }
                 }
                 session.commitConfiguration()
                 session.startRunning()
                 
                 self.session = session
+                let demensions = CMVideoFormatDescriptionGetDimensions(device.activeFormat.formatDescription)
+                let width = Double(demensions.height)
+                let height = Double(demensions.width)
+                let size = ["width": width, "height": height]
+                let answer: [String : Any?] = ["textureId": textureId, "size": size]
+                result(answer)
             } catch  {
                 print(error)
             }
         }
     }
+
     
-     
+    
     public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
         if latestBuffer == nil {
             return nil
@@ -128,11 +156,14 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         
+        latestBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
+        registry.textureFrameAvailable(textureId)
+        
         //registry.textureFrameAvailable(textureId)
         //deepAr.processFrame(CMSampleBufferGetImageBuffer(sampleBuffer), mirror: true)
     }
     
-    public func frameAvailable(_ sampleBuffer: CMSampleBuffer!) {
-        print("DEEP_AR_FRAMES")
-    }
+    //    public func frameAvailable(_ sampleBuffer: CMSampleBuffer!) {
+    //        print("DEEP_AR_FRAMES")
+    //    }
 }

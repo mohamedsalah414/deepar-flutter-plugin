@@ -66,7 +66,7 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    return false
+    return _controller.isPermission
         ? Stack(
             children: [
               _controller.isInitialized

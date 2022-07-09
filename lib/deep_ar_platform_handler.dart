@@ -57,7 +57,7 @@ class DeepArPlatformHandler {
     return await _channel.invokeMethod<String?>(PlatformStrings.checkVersion);
   }
 
-  Future<int?> createSurface() async {
-    return await _channel.invokeMethod<int?>('create_surface');
+  Future<Map<String, dynamic>?> createSurface() async {
+    return await _channel.invokeMapMethod<String, dynamic>('create_surface');
   }
 }
