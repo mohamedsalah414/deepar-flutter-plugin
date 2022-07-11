@@ -21,49 +21,37 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     let previewLayer = AVCaptureVideoPreviewLayer()
     
     
-    private let shutterButton: UIButton = {
-        let button = UIButton(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
-        button.layer.cornerRadius = 50
-        button.layer.borderWidth = 3
-        button.layer.borderColor = UIColor.white.cgColor
-        return button
-    }()
-    
     init(_ registry: FlutterTextureRegistry) {
         self.registry = registry
-       
         super.init()
     }
     
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         
-        if ("check_version" == call.method) {
-            result("iOS " + UIDevice.current.systemVersion)
-        }
-        if("check_all_permission" == call.method){
+        let args = call.arguments as? [String : Any]
+        
+        switch call.method {
+        case "check_all_permission":
             let isGranted:Bool = checkCameraPermission()
             result(isGranted)
-        }
-        
-        if ("create_surface" == call.method) {
+        case "initialize":
+            let licenseKey: String = args?["license_key"] as! String
+            setupDeepARCamera(licenseKey: licenseKey)
+            result("Initialized")
+            
+        case "start_camera":
             textureId = registry.register(self)
-            
-            setupDeepARCamera();
             setUpCamera(result: result)
-            
-        }
-        
-        if ("switch_effect" == call.method) {
-            guard let args = call.arguments as? [String : Any] else {return}
-            let effect: Int = args["effect"] as! Int
-            
-            let key = registrar?.lookupKey(forAsset: "assets/effects/burning_effect.deepar")
+        case "switch_effect":
+            let effect:String = args?["effect"] as! String
+            //            let key = registrar?.lookupKey(forAsset: "assets/effects/burning_effect.deepar")
+            let key = registrar?.lookupKey(forAsset: effect)
             let topPath = Bundle.main.path(forResource: key, ofType: nil)
             deepAR.switchEffect(withSlot: "effect", path: topPath)
-            
+        default:
+            result("Failed to call iOS platform method")
         }
-        
     }
     
     private func checkCameraPermission() -> Bool{
@@ -78,9 +66,6 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 }
                 
                 isGranted = true
-                //                DispatchQueue.main.async {
-                //                    self?.setUpCamera()
-                //                }
             }
         case .restricted:
             break
@@ -95,9 +80,9 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         return isGranted
     }
     
-    private func setupDeepARCamera(){
-        deepAR = DeepAR();
-        self.deepAR.setLicenseKey("38c170bb360fff2913731fdb0bb17a6257d85e6240d53aeb53a997886698ab4cb13a8b90736684ae")
+    private func setupDeepARCamera(licenseKey: String) {
+        self.deepAR = DeepAR();
+        self.deepAR.setLicenseKey(licenseKey)
         self.deepAR.delegate = self
         self.deepAR.changeLiveMode(false);
         self.deepAR.initializeOffscreen(withWidth: 1080, height: 1920);

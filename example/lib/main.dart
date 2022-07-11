@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:camera/camera.dart';
 import 'package:deep_ar/deep_ar_controller.dart';
 import 'package:flutter/material.dart';
@@ -86,9 +88,7 @@ class _HomeState extends State<Home> {
                 ),
                 ElevatedButton(
                     onPressed: () async {
-                      //version = await _controller.checkVersion() ?? '';
-                      _controller.createSurface();
-                      setState(() {});
+                      initializeDeepAr();
                     },
                     child:
                         const Text("Click here to update permission status")),
@@ -100,8 +100,9 @@ class _HomeState extends State<Home> {
   Future<void> initializeDeepAr() async {
     await _controller
         .initialize(
-          licenseKey:
-              "53de9b68021fd5be051ddd80c8d1aee5653eda7cabcd58776c1a96e5027f4a8c78d4946795ccd944",
+          licenseKey: Platform.isAndroid
+              ? "53de9b68021fd5be051ddd80c8d1aee5653eda7cabcd58776c1a96e5027f4a8c78d4946795ccd944"
+              : "38c170bb360fff2913731fdb0bb17a6257d85e6240d53aeb53a997886698ab4cb13a8b90736684ae",
           preset: Resolution.high,
         )
         .then((value) => setState(() {}));
