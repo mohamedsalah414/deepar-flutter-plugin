@@ -8,19 +8,18 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         let channel = FlutterMethodChannel(name: "deep_ar", binaryMessenger: registrar.messenger())
         let instance = SwiftDeepArPlugin(registrar.textures())
         registrar.addMethodCallDelegate(instance, channel: channel)
+        instance.registrar = registrar
     }
     
+    var registrar: FlutterPluginRegistrar? = nil
     let registry: FlutterTextureRegistry
     var textureId: Int64!
     var latestBuffer: CVImageBuffer!
-    var analyzeMode: Int
-    var analyzing: Bool
     var deepAR: DeepAR!
     var session: AVCaptureSession?
-    //let output = AVCapturePhotoOutput()
     let videoOutput = AVCaptureVideoDataOutput()
     let previewLayer = AVCaptureVideoPreviewLayer()
-   
+    
     
     private let shutterButton: UIButton = {
         let button = UIButton(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
@@ -32,13 +31,13 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     
     init(_ registry: FlutterTextureRegistry) {
         self.registry = registry
-        analyzeMode = 0
-        analyzing = false
+       
         super.init()
     }
-
+    
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        
         if ("check_version" == call.method) {
             result("iOS " + UIDevice.current.systemVersion)
         }
@@ -52,6 +51,16 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             
             setupDeepARCamera();
             setUpCamera(result: result)
+            
+        }
+        
+        if ("switch_effect" == call.method) {
+            guard let args = call.arguments as? [String : Any] else {return}
+            let effect: Int = args["effect"] as! Int
+            
+            let key = registrar?.lookupKey(forAsset: "assets/effects/burning_effect.deepar")
+            let topPath = Bundle.main.path(forResource: key, ofType: nil)
+            deepAR.switchEffect(withSlot: "effect", path: topPath)
             
         }
         
@@ -88,10 +97,10 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     
     private func setupDeepARCamera(){
         deepAR = DeepAR();
-        self.deepAR.delegate = self
         self.deepAR.setLicenseKey("38c170bb360fff2913731fdb0bb17a6257d85e6240d53aeb53a997886698ab4cb13a8b90736684ae")
-        self.deepAR.changeLiveMode(true);
-        self.deepAR.initializeOffscreen(withWidth: 1920, height: 1080);
+        self.deepAR.delegate = self
+        self.deepAR.changeLiveMode(false);
+        self.deepAR.initializeOffscreen(withWidth: 1080, height: 1920);
     }
     
     private func setUpCamera(result: @escaping FlutterResult){
@@ -105,7 +114,7 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 if session.canAddInput(input){
                     session.addInput(input)
                 }
-                                
+                
                 videoOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
                 videoOutput.alwaysDiscardsLateVideoFrames = true
                 videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue.main);
@@ -135,25 +144,15 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             }
         }
     }
-    public func faceTracked(_ faceData: MultiFaceData) {
-        print("Face tracked");
-    }
-    public func didInitialize() {
-        print("is initialized");
-        self.deepAR.startCapture(withOutputWidth: 1920, outputHeight: 1080, subframe: CGRect(x: 0,y: 0,width: 1,height: 1))
-    }
-
     
-
+    
     ///Frames output from AvCaptureSession
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-       
         deepAR.enqueueCameraFrame(sampleBuffer, mirror: false);
     }
+    
     ///Frames available should be triggered when enque camera frames are available
     public func frameAvailable(_ sampleBuffer: CMSampleBuffer!) {
-        print("DEEPAR frames availble");
-        //assign the lastest pixel buffer
         latestBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
         ///update preview in flutter
         registry.textureFrameAvailable(textureId)
