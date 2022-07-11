@@ -47,5 +47,7 @@
 	<string>DeepAR need to use your camera to show a preview.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>DeepAR need to use your microphone to record video.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>App needs photo library access</string>
 </dict>
 </plist>

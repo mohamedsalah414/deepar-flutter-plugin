@@ -49,6 +49,12 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             let key = registrar?.lookupKey(forAsset: effect)
             let topPath = Bundle.main.path(forResource: key, ofType: nil)
             deepAR.switchEffect(withSlot: "effect", path: topPath)
+        case "start_recording_video":
+            let width: Int32 = Int32(deepAR.renderingResolution.width)
+            let height: Int32 =  Int32(deepAR.renderingResolution.height)
+            deepAR.startVideoRecording(withOutputWidth: width, outputHeight: height)
+        case "stop_recording_video":
+            deepAR.finishVideoRecording()
         default:
             result("Failed to call iOS platform method")
         }
@@ -128,6 +134,15 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 print(error)
             }
         }
+    }
+    
+    public func didStartVideoRecording() {
+        print("VIDEO START")
+    }
+    
+    public func didFinishVideoRecording(_ videoFilePath: String!) {
+        print(videoFilePath)
+        print("VIDEO STOP")
     }
     
     

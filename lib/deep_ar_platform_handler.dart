@@ -31,16 +31,17 @@ class DeepArPlatformHandler {
   }
 
   Future<Map<String, dynamic>?> startCameraIos() async {
-    return await _channel.invokeMapMethod<String, dynamic>(PlatformStrings.startCamera);
+    return await _channel
+        .invokeMapMethod<String, dynamic>(PlatformStrings.startCamera);
   }
 
-  Future<String?> switchEffect(int effect) {
+  Future<String?> switchEffect(String effect) {
     return _channel.invokeMethod<String>(PlatformStrings.switchEffect, {
       PlatformStrings.effect: effect,
     });
   }
 
-  Future<void> startRecordingVideo(String filePath) async {
+  Future<void> startRecordingVideo({String? filePath}) async {
     await _channel.invokeMethod(PlatformStrings.startRecordingVideo, {
       'file_path': filePath,
     });

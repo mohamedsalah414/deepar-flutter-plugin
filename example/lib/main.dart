@@ -4,8 +4,8 @@ import 'package:camera/camera.dart';
 import 'package:deep_ar/deep_ar_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:deep_ar/deep_ar.dart';
+import 'dart:convert';
 
-import 'dart:math';
 import 'package:deep_ar/resolution_preset.dart';
 
 void main() async {
@@ -52,6 +52,8 @@ class _HomeState extends State<Home> {
   late final DeepArController _controller;
   bool isRecording = false;
   String version = '';
+  List<String> effectsList = [];
+  int _effectIndex = 0;
 
   @override
   void initState() {
@@ -63,6 +65,10 @@ class _HomeState extends State<Home> {
 
   @override
   void didChangeDependencies() {
+    _getEffects(context).then((values) {
+      effectsList.clear();
+      effectsList.addAll(values);
+    });
     super.didChangeDependencies();
   }
 
@@ -82,10 +88,8 @@ class _HomeState extends State<Home> {
           )
         : Center(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Center(
-                  child: Text("VERSION : $version"),
-                ),
                 ElevatedButton(
                     onPressed: () async {
                       initializeDeepAr();
@@ -122,7 +126,8 @@ class _HomeState extends State<Home> {
             IconButton(
                 iconSize: 60,
                 onPressed: () {
-                  _controller.switchEffect(Random().nextInt(15));
+                  String prevEffect = getPrevEffect();
+                  _controller.switchEffect(prevEffect);
                 },
                 icon: const Icon(
                   Icons.arrow_back_ios,
@@ -145,7 +150,8 @@ class _HomeState extends State<Home> {
             IconButton(
                 iconSize: 60,
                 onPressed: () {
-                  _controller.switchEffect(Random().nextInt(15));
+                  String nextEffect = getNextEffect();
+                  _controller.switchEffect(nextEffect);
                 },
                 icon: const Icon(
                   Icons.arrow_forward_ios,
@@ -155,5 +161,30 @@ class _HomeState extends State<Home> {
         ),
       ),
     );
+  }
+
+  Future<List<String>> _getEffects(BuildContext context) async {
+    // Load as String
+    final manifestContent =
+        await DefaultAssetBundle.of(context).loadString('AssetManifest.json');
+
+    // Decode to Map
+    final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+
+    // Filter by path
+    final filtered = manifestMap.keys
+        .where((path) => path.startsWith('assets/effects/'))
+        .toList();
+    return filtered;
+  }
+
+  String getNextEffect() {
+    _effectIndex < effectsList.length ? _effectIndex++ : _effectIndex = 0;
+    return effectsList[_effectIndex];
+  }
+
+  String getPrevEffect() {
+    _effectIndex > 0 ? _effectIndex-- : _effectIndex = effectsList.length;
+    return effectsList[_effectIndex];
   }
 }
