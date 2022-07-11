@@ -91,7 +91,7 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         self.deepAR.delegate = self
         self.deepAR.setLicenseKey("38c170bb360fff2913731fdb0bb17a6257d85e6240d53aeb53a997886698ab4cb13a8b90736684ae")
         self.deepAR.changeLiveMode(true);
-        self.deepAR.initializeOffscreen(withWidth: 1080, height: 1920);
+        self.deepAR.initializeOffscreen(withWidth: 1920, height: 1080);
     }
     
     private func setUpCamera(result: @escaping FlutterResult){
@@ -123,7 +123,6 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 }
                 session.commitConfiguration()
                 session.startRunning()
-//                self.deepAR.startCapture(withOutputWidth: 300, outputHeight:500, subframe: CGRect(x: 0.0, y: 0.0, width: 1.0, height: 1.0))
                 self.session = session
                 let demensions = CMVideoFormatDescriptionGetDimensions(device.activeFormat.formatDescription)
                 let width = Double(demensions.height)
@@ -136,16 +135,24 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             }
         }
     }
-   
+    public func faceTracked(_ faceData: MultiFaceData) {
+        print("Face tracked");
+    }
+    public func didInitialize() {
+        print("is initialized");
+        self.deepAR.startCapture(withOutputWidth: 1920, outputHeight: 1080, subframe: CGRect(x: 0,y: 0,width: 1,height: 1))
+    }
 
     
 
     ///Frames output from AvCaptureSession
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+       
         deepAR.enqueueCameraFrame(sampleBuffer, mirror: false);
     }
     ///Frames available should be triggered when enque camera frames are available
     public func frameAvailable(_ sampleBuffer: CMSampleBuffer!) {
+        print("DEEPAR frames availble");
         //assign the lastest pixel buffer
         latestBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
         ///update preview in flutter
