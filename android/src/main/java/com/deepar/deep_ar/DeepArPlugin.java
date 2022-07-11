@@ -1,7 +1,6 @@
 package com.deepar.deep_ar;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -11,15 +10,12 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.media.Image;
-import android.os.Build;
 import android.util.Log;
 import android.view.Surface;
-import android.widget.Toast;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.ArrayList;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import ai.deepar.ar.ARErrorType;
 import ai.deepar.ar.AREventListener;
@@ -126,8 +122,9 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                 break;
 
             case MethodStrings.switchEffect: // Switch Effect
-                int effectIndex = ((Number) arguments.get(MethodStrings.effect)).intValue();
-                deepAR.switchEffect("effect", deepArEffects.getFilterPath(effectIndex));
+                String effect = ((String) arguments.get("effect"));
+                String effectName = extractFileName(effect);
+                deepAR.switchEffect("effect", "file:///android_asset/" + effectName);
                 result.success("Effect Changed");
                 break;
 
@@ -140,6 +137,8 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                 deepAR.stopVideoRecording();
                 break;
         }
+
+
     }
 
     private void setCameraXChannel(CameraResolutionPreset resolutionPreset) {
@@ -265,5 +264,18 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
     public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         Log.d(TAG, "onRequestPermissionsResult: "+requestCode);
         return false;
+    }
+
+    private String extractFileName(String fullPathFile){
+        try {
+            Pattern regex = Pattern.compile("([^\\\\/:*?\"<>|\r\n]+$)");
+            Matcher regexMatcher = regex.matcher(fullPathFile);
+            if (regexMatcher.find()){
+                return regexMatcher.group(1);
+            }
+        } catch (PatternSyntaxException ex) {
+            Log.i(TAG, "extractFileName::pattern problem <"+fullPathFile+">",ex);
+        }
+        return fullPathFile;
     }
 }
