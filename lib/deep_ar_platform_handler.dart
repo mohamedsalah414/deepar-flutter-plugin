@@ -49,6 +49,15 @@ class DeepArPlatformHandler {
   }
 
   Future<bool?> checkAllPermission() async {
-    return await _channel.invokeMethod<bool?>(PlatformStrings.checkAllPermission);
+    return await _channel
+        .invokeMethod<bool?>(PlatformStrings.checkAllPermission);
+  }
+
+  Future<String?> checkVersion() async {
+    return await _channel.invokeMethod<String?>(PlatformStrings.checkVersion);
+  }
+
+  Future<Map<String, dynamic>?> createSurface() async {
+    return await _channel.invokeMapMethod<String, dynamic>('create_surface');
   }
 }

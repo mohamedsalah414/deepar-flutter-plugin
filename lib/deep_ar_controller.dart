@@ -9,6 +9,7 @@ class DeepArController {
   DeepArController() : super();
   final DeepArPlatformHandler _deepArPlatformHandler = DeepArPlatformHandler();
   int? textureId;
+  Size? size;
   double? height;
   double? width;
   double _aspectRatio = 1.0;
@@ -23,14 +24,15 @@ class DeepArController {
     resolution = preset;
     isPermission = await _deepArPlatformHandler.checkAllPermission() ?? false;
     if (isPermission) {
-      String? dimensions =
-          await _deepArPlatformHandler.initialize(licenseKey, preset);
-      if (dimensions != null) {
-        width = double.parse(dimensions.split(" ")[0]);
-        height = double.parse(dimensions.split(" ")[1]);
-        _aspectRatio = width! / height!;
-        textureId = await _deepArPlatformHandler.startCamera();
-      }
+      await createSurface();
+      // String? dimensions =
+      //     await _deepArPlatformHandler.initialize(licenseKey, preset);
+      // if (dimensions != null) {
+      //   width = double.parse(dimensions.split(" ")[0]);
+      //   height = double.parse(dimensions.split(" ")[1]);
+      //   _aspectRatio = width! / height!;
+      //   textureId = await _deepArPlatformHandler.startCamera();
+      // }
     }
   }
 
@@ -57,5 +59,27 @@ class DeepArController {
 
   void stopVideoRecording() {
     _deepArPlatformHandler.stopRecordingVideo();
+  }
+
+  Future<String?> checkVersion() {
+    return _deepArPlatformHandler.checkVersion();
+  }
+
+  Future<void> createSurface() async {
+    final answer = await _deepArPlatformHandler.createSurface();
+    textureId = answer?['textureId'];
+    size = toSize(answer?['size']);
+    _aspectRatio = size!.width / size!.height;
+    isPermission = true;
+    //args.value = CameraArgs(textureId, size);
+
+    //textureId = await _deepArPlatformHandler.createSurface();
+    print("TEXTURE_ID : $textureId");
+  }
+
+  Size toSize(Map<dynamic, dynamic> data) {
+    final width = data['width'];
+    final height = data['height'];
+    return Size(width, height);
   }
 }

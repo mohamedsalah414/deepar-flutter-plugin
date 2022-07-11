@@ -12,7 +12,7 @@ class DeepArPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     return deepArController.isInitialized
         ? AspectRatio(
-            aspectRatio: 1 / deepArController.aspectRatio,
+            aspectRatio: deepArController.aspectRatio,
             child: deepArController.buildPreview(),
           )
         : Container();

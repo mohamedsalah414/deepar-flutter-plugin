@@ -49,10 +49,13 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   late final DeepArController _controller;
   bool isRecording = false;
+  String version = '';
+
   @override
   void initState() {
     _controller = DeepArController();
     initializeDeepAr();
+
     super.initState();
   }
 
@@ -76,12 +79,21 @@ class _HomeState extends State<Home> {
             ],
           )
         : Center(
-            child: ElevatedButton(
-                onPressed: () async {
-                  await initializeDeepAr();
-                  setState(() {});
-                },
-                child: const Text("Click here to update permission status")),
+            child: Column(
+              children: [
+                Center(
+                  child: Text("VERSION : $version"),
+                ),
+                ElevatedButton(
+                    onPressed: () async {
+                      //version = await _controller.checkVersion() ?? '';
+                      _controller.createSurface();
+                      setState(() {});
+                    },
+                    child:
+                        const Text("Click here to update permission status")),
+              ],
+            ),
           );
   }
 
