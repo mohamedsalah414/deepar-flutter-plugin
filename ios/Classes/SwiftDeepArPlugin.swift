@@ -15,11 +15,12 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     var latestBuffer: CVImageBuffer!
     var analyzeMode: Int
     var analyzing: Bool
-    var deepAr: DeepAR!
+    var deepAR: DeepAR!
     var session: AVCaptureSession?
     //let output = AVCapturePhotoOutput()
     let videoOutput = AVCaptureVideoDataOutput()
     let previewLayer = AVCaptureVideoPreviewLayer()
+   
     
     private let shutterButton: UIButton = {
         let button = UIButton(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
@@ -35,6 +36,7 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         analyzing = false
         super.init()
     }
+
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         if ("check_version" == call.method) {
@@ -48,20 +50,9 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         if ("create_surface" == call.method) {
             textureId = registry.register(self)
             
-            
+            setupDeepARCamera();
             setUpCamera(result: result)
             
-            //registry.textureFrameAvailable(textureId)
-            //deepAr.changeLiveMode(true)
-            
-            //            self.deepAr = DeepAR()
-            //            self.deepAr.delegate = self
-            //            deepAr.setLicenseKey("53de9b68021fd5be051ddd80c8d1aee5653eda7cabcd58776c1a96e5027f4a8c78d4946795ccd944")
-            //            deepAr.initialize()
-            
-            
-            
-            //result(textureId)
         }
         
     }
@@ -95,6 +86,14 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         return isGranted
     }
     
+    private func setupDeepARCamera(){
+        deepAR = DeepAR();
+        self.deepAR.delegate = self
+        self.deepAR.setLicenseKey("38c170bb360fff2913731fdb0bb17a6257d85e6240d53aeb53a997886698ab4cb13a8b90736684ae")
+        self.deepAR.changeLiveMode(true);
+        self.deepAR.initializeOffscreen(withWidth: 1080, height: 1920);
+    }
+    
     private func setUpCamera(result: @escaping FlutterResult){
         let session = AVCaptureSession()
         let position = AVCaptureDevice.Position.front
@@ -106,24 +105,17 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 if session.canAddInput(input){
                     session.addInput(input)
                 }
-                
-                //                if session.canAddOutput(output){
-                //                    session.addOutput(output)
-                //                }
-                
-                //previewLayer.videoGravity = .resizeAspectFill
-                //previewLayer.session = session
-                
-                
+                                
                 videoOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
                 videoOutput.alwaysDiscardsLateVideoFrames = true
-                videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue.main)
+                videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue.main);
                 
                 if session.canAddOutput(videoOutput){
                     session.addOutput(videoOutput)
                 }
                 
                 for connection in videoOutput.connections {
+                    
                     connection.videoOrientation = .portrait
                     if position == .front && connection.isVideoMirroringSupported {
                         connection.isVideoMirrored = true
@@ -131,7 +123,7 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 }
                 session.commitConfiguration()
                 session.startRunning()
-                
+//                self.deepAR.startCapture(withOutputWidth: 300, outputHeight:500, subframe: CGRect(x: 0.0, y: 0.0, width: 1.0, height: 1.0))
                 self.session = session
                 let demensions = CMVideoFormatDescriptionGetDimensions(device.activeFormat.formatDescription)
                 let width = Double(demensions.height)
@@ -144,8 +136,21 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             }
         }
     }
+   
 
     
+
+    ///Frames output from AvCaptureSession
+    public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        deepAR.enqueueCameraFrame(sampleBuffer, mirror: false);
+    }
+    ///Frames available should be triggered when enque camera frames are available
+    public func frameAvailable(_ sampleBuffer: CMSampleBuffer!) {
+        //assign the lastest pixel buffer
+        latestBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
+        ///update preview in flutter
+        registry.textureFrameAvailable(textureId)
+    }
     
     public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
         if latestBuffer == nil {
@@ -154,16 +159,4 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         return Unmanaged<CVPixelBuffer>.passRetained(latestBuffer)
     }
     
-    public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        
-        latestBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
-        registry.textureFrameAvailable(textureId)
-        
-        //registry.textureFrameAvailable(textureId)
-        //deepAr.processFrame(CMSampleBufferGetImageBuffer(sampleBuffer), mirror: true)
-    }
-    
-    //    public func frameAvailable(_ sampleBuffer: CMSampleBuffer!) {
-    //        print("DEEP_AR_FRAMES")
-    //    }
 }
