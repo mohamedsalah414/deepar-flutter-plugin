@@ -1,6 +1,4 @@
 PODS:
-  - camera_avfoundation (0.0.1):
-    - Flutter
   - deep_ar (0.0.1):
     - Flutter
   - Flutter (1.0.0)
@@ -8,14 +6,11 @@ PODS:
     - Flutter
 
 DEPENDENCIES:
-  - camera_avfoundation (from `.symlinks/plugins/camera_avfoundation/ios`)
   - deep_ar (from `.symlinks/plugins/deep_ar/ios`)
   - Flutter (from `Flutter`)
   - path_provider_ios (from `.symlinks/plugins/path_provider_ios/ios`)
 
 EXTERNAL SOURCES:
-  camera_avfoundation:
-    :path: ".symlinks/plugins/camera_avfoundation/ios"
   deep_ar:
     :path: ".symlinks/plugins/deep_ar/ios"
   Flutter:
@@ -24,7 +19,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/path_provider_ios/ios"
 
 SPEC CHECKSUMS:
-  camera_avfoundation: 07c77549ea54ad95d8581be86617c094a46280d9
   deep_ar: 5763c28e8669381b4d25a5f5f5171580e903a01f
   Flutter: 50d75fe2f02b26cc09d224853bb45737f8b3214a
   path_provider_ios: 14f3d2fd28c4fdb42f44e0f751d12861c43cee02

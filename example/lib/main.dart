@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:camera/camera.dart';
 import 'package:deep_ar/deep_ar_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:deep_ar/deep_ar.dart';
@@ -10,13 +9,11 @@ import 'package:deep_ar/resolution_preset.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final cameras = await availableCameras();
-  runApp(MyApp(cameras));
+  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
-  final List<CameraDescription> cameras;
-  const MyApp(this.cameras, {Key? key}) : super(key: key);
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -53,23 +50,22 @@ class _HomeState extends State<Home> {
   bool isRecording = false;
   bool isFlashOn = false;
   String version = '';
-  List<String> effectsList = [];
+  bool _isRecording = false;
+  final List<String> _effectsList = [];
   int _effectIndex = 0;
+
+  final String _assetEffectsPath = 'assets/effects/';
 
   @override
   void initState() {
     _controller = DeepArController();
-    initializeDeepAr();
-
+    _initializeDeepAr();
     super.initState();
   }
 
   @override
   void didChangeDependencies() {
-    _getEffects(context).then((values) {
-      effectsList.clear();
-      effectsList.addAll(values);
-    });
+    _initEffects();
     super.didChangeDependencies();
   }
 
@@ -98,7 +94,8 @@ class _HomeState extends State<Home> {
                       iconSize: 40,
                       icon:
                           Icon(isFlashOn ? Icons.flash_on : Icons.flash_off))),
-              _bottomButtons(),
+              
+              _mediaOptions(),
             ],
           )
         : Center(
@@ -107,7 +104,7 @@ class _HomeState extends State<Home> {
               children: [
                 ElevatedButton(
                     onPressed: () async {
-                      initializeDeepAr();
+                      _initializeDeepAr();
                     },
                     child:
                         const Text("Click here to update permission status")),
@@ -116,7 +113,7 @@ class _HomeState extends State<Home> {
           );
   }
 
-  Future<void> initializeDeepAr() async {
+  Future<void> _initializeDeepAr() async {
     await _controller
         .initialize(
           androidLicenseKey:
@@ -128,7 +125,8 @@ class _HomeState extends State<Home> {
         .then((value) => setState(() {}));
   }
 
-  Positioned _bottomButtons() {
+  /// Sample option which can be performed
+  Positioned _mediaOptions() {
     return Positioned(
       bottom: 0,
       right: 0,
@@ -142,7 +140,7 @@ class _HomeState extends State<Home> {
             IconButton(
                 iconSize: 60,
                 onPressed: () {
-                  String prevEffect = getPrevEffect();
+                  String prevEffect = _getPrevEffect();
                   _controller.switchEffect(prevEffect);
                 },
                 icon: const Icon(
@@ -151,12 +149,12 @@ class _HomeState extends State<Home> {
                 )),
             IconButton(
                 onPressed: () {
-                  if (isRecording) {
+                  if (_isRecording) {
                     _controller.stopVideoRecording();
-                    isRecording = false;
+                    _isRecording = false;
                   } else {
                     _controller.startVideoRecording();
-                    isRecording = true;
+                    _isRecording = true;
                   }
 
                   setState(() {});
@@ -177,7 +175,7 @@ class _HomeState extends State<Home> {
             IconButton(
                 iconSize: 60,
                 onPressed: () {
-                  String nextEffect = getNextEffect();
+                  String nextEffect = _getNextEffect();
                   _controller.switchEffect(nextEffect);
                 },
                 icon: const Icon(
@@ -190,28 +188,45 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Future<List<String>> _getEffects(BuildContext context) async {
-    // Load as String
+  /// Add effects which are rendered via DeepAR sdk
+  void _initEffects() {
+
+    // Either get all effects 
+    _getEffectsFromAssets(context).then((values) {
+      _effectsList.clear();
+      _effectsList.addAll(values);
+    });
+
+    // OR
+
+    // Only add specific effects
+    // _effectsList.add(ASSET_PATH+'burning_effect.deepar');
+    // _effectsList.add(ASSET_PATH+'flower_face.deepar');
+    // _effectsList.add(ASSET_PATH+'Hope.deepar');
+    // _effectsList.add(ASSET_PATH+'viking_helmet.deepar');
+  }
+
+  /// Get all deepar effects from assets
+  ///
+  Future<List<String>> _getEffectsFromAssets(BuildContext context) async {
     final manifestContent =
         await DefaultAssetBundle.of(context).loadString('AssetManifest.json');
-
-    // Decode to Map
     final Map<String, dynamic> manifestMap = json.decode(manifestContent);
-
-    // Filter by path
-    final filtered = manifestMap.keys
-        .where((path) => path.startsWith('assets/effects/'))
+    final filePaths = manifestMap.keys
+        .where((path) => path.startsWith(_assetEffectsPath))
         .toList();
-    return filtered;
+    return filePaths;
   }
 
-  String getNextEffect() {
-    _effectIndex < effectsList.length ? _effectIndex++ : _effectIndex = 0;
-    return effectsList[_effectIndex];
+  /// Get next effect
+  String _getNextEffect() {
+    _effectIndex < _effectsList.length ? _effectIndex++ : _effectIndex = 0;
+    return _effectsList[_effectIndex];
   }
 
-  String getPrevEffect() {
-    _effectIndex > 0 ? _effectIndex-- : _effectIndex = effectsList.length;
-    return effectsList[_effectIndex];
+  /// Get previous effect
+  String _getPrevEffect() {
+    _effectIndex > 0 ? _effectIndex-- : _effectIndex = _effectsList.length;
+    return _effectsList[_effectIndex];
   }
 }
