@@ -24,21 +24,24 @@ class DeepArPlatformHandler {
     });
   }
 
-  Future<int> startCamera() async {
+  Future<int> startCameraAndroid() async {
     int texturedId =
         await _cameraXChannel.invokeMethod(PlatformStrings.startCamera);
-    // ignore: avoid_print
-    print("TEXTURE_IDD $texturedId");
     return texturedId;
   }
 
-  Future<String?> switchEffect(int effect) {
+  Future<Map<String, dynamic>?> startCameraIos() async {
+    return await _channel
+        .invokeMapMethod<String, dynamic>(PlatformStrings.startCamera);
+  }
+
+  Future<String?> switchEffect(String effect) {
     return _channel.invokeMethod<String>(PlatformStrings.switchEffect, {
       PlatformStrings.effect: effect,
     });
   }
 
-  Future<void> startRecordingVideo(String filePath) async {
+  Future<void> startRecordingVideo({String? filePath}) async {
     await _channel.invokeMethod(PlatformStrings.startRecordingVideo, {
       'file_path': filePath,
     });
@@ -55,9 +58,5 @@ class DeepArPlatformHandler {
 
   Future<String?> checkVersion() async {
     return await _channel.invokeMethod<String?>(PlatformStrings.checkVersion);
-  }
-
-  Future<Map<String, dynamic>?> createSurface() async {
-    return await _channel.invokeMapMethod<String, dynamic>('create_surface');
   }
 }

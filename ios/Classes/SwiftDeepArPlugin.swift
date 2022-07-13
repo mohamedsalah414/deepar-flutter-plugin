@@ -3,7 +3,7 @@ import UIKit
 import DeepAR
 import AVFoundation
 
-public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptureVideoDataOutputSampleBufferDelegate, DeepARDelegate {
+public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture,  DeepARDelegate {
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "deep_ar", binaryMessenger: registrar.messenger())
         let instance = SwiftDeepArPlugin(registrar.textures())
@@ -19,51 +19,46 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     var session: AVCaptureSession?
     let videoOutput = AVCaptureVideoDataOutput()
     let previewLayer = AVCaptureVideoPreviewLayer()
+    private var arView: ARView!
     
+    private var cameraController: CameraController!
     
-    private let shutterButton: UIButton = {
-        let button = UIButton(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
-        button.layer.cornerRadius = 50
-        button.layer.borderWidth = 3
-        button.layer.borderColor = UIColor.white.cgColor
-        return button
-    }()
     
     init(_ registry: FlutterTextureRegistry) {
         self.registry = registry
-       
         super.init()
     }
     
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         
-        if ("check_version" == call.method) {
-            result("iOS " + UIDevice.current.systemVersion)
-        }
-        if("check_all_permission" == call.method){
+        let args = call.arguments as? [String : Any]
+        
+        switch call.method {
+        case "check_all_permission":
             let isGranted:Bool = checkCameraPermission()
             result(isGranted)
-        }
-        
-        if ("create_surface" == call.method) {
+        case "initialize":
+            let licenseKey: String = args?["license_key"] as! String
+            setupDeepARCamera(licenseKey: licenseKey)
+            result("Initialized")
+            
+        case "start_camera":
             textureId = registry.register(self)
-            
-            setupDeepARCamera();
             setUpCamera(result: result)
-            
-        }
-        
-        if ("switch_effect" == call.method) {
-            guard let args = call.arguments as? [String : Any] else {return}
-            let effect: Int = args["effect"] as! Int
-            
-            let key = registrar?.lookupKey(forAsset: "assets/effects/burning_effect.deepar")
+        case "switch_effect":
+            let effect:String = args?["effect"] as! String
+            let key = registrar?.lookupKey(forAsset: effect)
             let topPath = Bundle.main.path(forResource: key, ofType: nil)
             deepAR.switchEffect(withSlot: "effect", path: topPath)
-            
+        case "start_recording_video":
+            arView.startVideoRecording(withOutputWidth: 720, outputHeight: 1280)
+            deepAR.startVideoRecording(withOutputWidth: 720, outputHeight: 1280)
+        case "stop_recording_video":
+            deepAR.finishVideoRecording()
+        default:
+            result("Failed to call iOS platform method")
         }
-        
     }
     
     private func checkCameraPermission() -> Bool{
@@ -78,9 +73,6 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 }
                 
                 isGranted = true
-                //                DispatchQueue.main.async {
-                //                    self?.setUpCamera()
-                //                }
             }
         case .restricted:
             break
@@ -95,65 +87,50 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         return isGranted
     }
     
-    private func setupDeepARCamera(){
-        deepAR = DeepAR();
-        self.deepAR.setLicenseKey("38c170bb360fff2913731fdb0bb17a6257d85e6240d53aeb53a997886698ab4cb13a8b90736684ae")
+    private func setupDeepARCamera(licenseKey: String) {
+        self.deepAR = DeepAR();
+        self.deepAR.setLicenseKey(licenseKey)
         self.deepAR.delegate = self
-        self.deepAR.changeLiveMode(false);
-        self.deepAR.initializeOffscreen(withWidth: 1080, height: 1920);
+        self.deepAR.changeLiveMode(true);
+        
+        //self.deepAR.initializeOffscreen(withWidth: 720, height: 1280);
+        
+        cameraController = CameraController()
+        cameraController.preset = AVCaptureSession.Preset.hd1920x1080
+        cameraController.videoOrientation = .portrait
+        
+        cameraController.deepAR = self.deepAR
+        self.deepAR.videoRecordingWarmupEnabled = false;
+        
+        self.arView = self.deepAR.createARView(withFrame: CGRect(x: 0, y: 0, width: 1080, height: 1920)) as? ARView
+        
+        cameraController.startCamera()
+        
+        
     }
     
-    private func setUpCamera(result: @escaping FlutterResult){
-        let session = AVCaptureSession()
-        let position = AVCaptureDevice.Position.front
-        if let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front)
-        {
-            do {
-                session.beginConfiguration()
-                let input = try AVCaptureDeviceInput(device: device)
-                if session.canAddInput(input){
-                    session.addInput(input)
-                }
-                
-                videoOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
-                videoOutput.alwaysDiscardsLateVideoFrames = true
-                videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue.main);
-                
-                if session.canAddOutput(videoOutput){
-                    session.addOutput(videoOutput)
-                }
-                
-                for connection in videoOutput.connections {
-                    
-                    connection.videoOrientation = .portrait
-                    if position == .front && connection.isVideoMirroringSupported {
-                        connection.isVideoMirrored = true
-                    }
-                }
-                session.commitConfiguration()
-                session.startRunning()
-                self.session = session
-                let demensions = CMVideoFormatDescriptionGetDimensions(device.activeFormat.formatDescription)
-                let width = Double(demensions.height)
-                let height = Double(demensions.width)
-                let size = ["width": width, "height": height]
-                let answer: [String : Any?] = ["textureId": textureId, "size": size]
-                result(answer)
-            } catch  {
-                print(error)
-            }
-        }
+    public func didStartVideoRecording() {
+        print("VIDEO START")
+    }
+    
+    public func didFinishVideoRecording(_ videoFilePath: String!) {
+        print(videoFilePath)
+        print("VIDEO STOP")
     }
     
     
-    ///Frames output from AvCaptureSession
-    public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        deepAR.enqueueCameraFrame(sampleBuffer, mirror: false);
+    public func didInitialize() {
+        print("DEEPAR INIT")
+        deepAR.showStats(true)
+        
+        deepAR.startCapture(withOutputWidth: 1080, outputHeight: 1920, subframe: CGRect(x: 0, y: 0, width: 1, height: 1))
     }
     
     ///Frames available should be triggered when enque camera frames are available
     public func frameAvailable(_ sampleBuffer: CMSampleBuffer!) {
+        //print("frameAvailable")
         latestBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
+        
         ///update preview in flutter
         registry.textureFrameAvailable(textureId)
     }
@@ -165,4 +142,11 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         return Unmanaged<CVPixelBuffer>.passRetained(latestBuffer)
     }
     
+    
+    private func setUpCamera(result: @escaping FlutterResult){
+        let size = ["width": 1080.0, "height": 1920.0]
+        let answer: [String : Any?] = ["textureId": textureId, "size": size]
+        result(answer)
+        
+    }
 }
