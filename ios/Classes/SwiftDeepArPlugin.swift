@@ -3,7 +3,7 @@ import UIKit
 import DeepAR
 import AVFoundation
 
-public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptureVideoDataOutputSampleBufferDelegate, DeepARDelegate {
+public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture,  DeepARDelegate {
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "deep_ar", binaryMessenger: registrar.messenger())
         let instance = SwiftDeepArPlugin(registrar.textures())
@@ -19,6 +19,9 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     var session: AVCaptureSession?
     let videoOutput = AVCaptureVideoDataOutput()
     let previewLayer = AVCaptureVideoPreviewLayer()
+    private var arView: ARView!
+    
+    private var cameraController: CameraController!
     
     
     init(_ registry: FlutterTextureRegistry) {
@@ -45,14 +48,12 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             setUpCamera(result: result)
         case "switch_effect":
             let effect:String = args?["effect"] as! String
-            //            let key = registrar?.lookupKey(forAsset: "assets/effects/burning_effect.deepar")
             let key = registrar?.lookupKey(forAsset: effect)
             let topPath = Bundle.main.path(forResource: key, ofType: nil)
             deepAR.switchEffect(withSlot: "effect", path: topPath)
         case "start_recording_video":
-            let width: Int32 = Int32(deepAR.renderingResolution.width)
-            let height: Int32 =  Int32(deepAR.renderingResolution.height)
-            deepAR.startVideoRecording(withOutputWidth: width, outputHeight: height)
+            arView.startVideoRecording(withOutputWidth: 720, outputHeight: 1280)
+            deepAR.startVideoRecording(withOutputWidth: 720, outputHeight: 1280)
         case "stop_recording_video":
             deepAR.finishVideoRecording()
         default:
@@ -90,50 +91,22 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         self.deepAR = DeepAR();
         self.deepAR.setLicenseKey(licenseKey)
         self.deepAR.delegate = self
-        self.deepAR.changeLiveMode(false);
-        self.deepAR.initializeOffscreen(withWidth: 1080, height: 1920);
-    }
-    
-    private func setUpCamera(result: @escaping FlutterResult){
-        let session = AVCaptureSession()
-        let position = AVCaptureDevice.Position.front
-        if let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front)
-        {
-            do {
-                session.beginConfiguration()
-                let input = try AVCaptureDeviceInput(device: device)
-                if session.canAddInput(input){
-                    session.addInput(input)
-                }
-                
-                videoOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
-                videoOutput.alwaysDiscardsLateVideoFrames = true
-                videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue.main);
-                
-                if session.canAddOutput(videoOutput){
-                    session.addOutput(videoOutput)
-                }
-                
-                for connection in videoOutput.connections {
-                    
-                    connection.videoOrientation = .portrait
-                    if position == .front && connection.isVideoMirroringSupported {
-                        connection.isVideoMirrored = true
-                    }
-                }
-                session.commitConfiguration()
-                session.startRunning()
-                self.session = session
-                let demensions = CMVideoFormatDescriptionGetDimensions(device.activeFormat.formatDescription)
-                let width = Double(demensions.height)
-                let height = Double(demensions.width)
-                let size = ["width": width, "height": height]
-                let answer: [String : Any?] = ["textureId": textureId, "size": size]
-                result(answer)
-            } catch  {
-                print(error)
-            }
-        }
+        self.deepAR.changeLiveMode(true);
+        
+        //self.deepAR.initializeOffscreen(withWidth: 720, height: 1280);
+        
+        cameraController = CameraController()
+        cameraController.preset = AVCaptureSession.Preset.hd1920x1080
+        cameraController.videoOrientation = .portrait
+        
+        cameraController.deepAR = self.deepAR
+        self.deepAR.videoRecordingWarmupEnabled = false;
+        
+        self.arView = self.deepAR.createARView(withFrame: CGRect(x: 0, y: 0, width: 1080, height: 1920)) as? ARView
+        
+        cameraController.startCamera()
+        
+        
     }
     
     public func didStartVideoRecording() {
@@ -146,14 +119,18 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     }
     
     
-    ///Frames output from AvCaptureSession
-    public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        deepAR.enqueueCameraFrame(sampleBuffer, mirror: false);
+    public func didInitialize() {
+        print("DEEPAR INIT")
+        deepAR.showStats(true)
+        
+        deepAR.startCapture(withOutputWidth: 1080, outputHeight: 1920, subframe: CGRect(x: 0, y: 0, width: 1, height: 1))
     }
     
     ///Frames available should be triggered when enque camera frames are available
     public func frameAvailable(_ sampleBuffer: CMSampleBuffer!) {
+        //print("frameAvailable")
         latestBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
+        
         ///update preview in flutter
         registry.textureFrameAvailable(textureId)
     }
@@ -165,4 +142,11 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         return Unmanaged<CVPixelBuffer>.passRetained(latestBuffer)
     }
     
+    
+    private func setUpCamera(result: @escaping FlutterResult){
+        let size = ["width": 1080.0, "height": 1920.0]
+        let answer: [String : Any?] = ["textureId": textureId, "size": size]
+        result(answer)
+        
+    }
 }
