@@ -49,5 +49,9 @@
 	<string>DeepAR need to use your microphone to record video.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>App needs photo library access</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>To save photos in gallery</string>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 </dict>
 </plist>

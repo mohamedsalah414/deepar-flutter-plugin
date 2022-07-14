@@ -2,8 +2,8 @@ import Flutter
 import UIKit
 import DeepAR
 import AVFoundation
-
-public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture,  DeepARDelegate {
+import Photos
+public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture,  DeepARDelegate ,AVAudioRecorderDelegate{
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "deep_ar", binaryMessenger: registrar.messenger())
         let instance = SwiftDeepArPlugin(registrar.textures())
@@ -19,9 +19,12 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture,  DeepAR
     var session: AVCaptureSession?
     let videoOutput = AVCaptureVideoDataOutput()
     let previewLayer = AVCaptureVideoPreviewLayer()
+    var audioRecorder: AVAudioRecorder!
     private var arView: ARView!
     
     private var cameraController: CameraController!
+    private var frameCount:Int = 0;
+    private var startTime:DispatchTime?;
     
     
     init(_ registry: FlutterTextureRegistry) {
@@ -52,10 +55,12 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture,  DeepAR
             let topPath = Bundle.main.path(forResource: key, ofType: nil)
             deepAR.switchEffect(withSlot: "effect", path: topPath)
         case "start_recording_video":
-            arView.startVideoRecording(withOutputWidth: 720, outputHeight: 1280)
-            deepAR.startVideoRecording(withOutputWidth: 720, outputHeight: 1280)
+            _captureState = _CaptureState.start;
+            result("Starting to record");
         case "stop_recording_video":
-            deepAR.finishVideoRecording()
+            _captureState = _CaptureState.end;
+            result("stopping recording");
+            
         default:
             result("Failed to call iOS platform method")
         }
@@ -96,44 +101,37 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture,  DeepAR
         //self.deepAR.initializeOffscreen(withWidth: 720, height: 1280);
         
         cameraController = CameraController()
-        cameraController.preset = AVCaptureSession.Preset.hd1920x1080
-        cameraController.videoOrientation = .portrait
+        cameraController.preset = AVCaptureSession.Preset.hd1280x720
+        cameraController.videoOrientation = .portrait;
+        cameraController.startAudio();
         
         cameraController.deepAR = self.deepAR
         self.deepAR.videoRecordingWarmupEnabled = false;
         
-        self.arView = self.deepAR.createARView(withFrame: CGRect(x: 0, y: 0, width: 1080, height: 1920)) as? ARView
+        self.arView = self.deepAR.createARView(withFrame: CGRect(x: 0, y: 0, width: 720, height: 1280)) as? ARView
         
         cameraController.startCamera()
-        
-        
     }
     
-    public func didStartVideoRecording() {
-        print("VIDEO START")
-    }
-    
-    public func didFinishVideoRecording(_ videoFilePath: String!) {
-        print(videoFilePath)
-        print("VIDEO STOP")
-    }
+
     
     
     public func didInitialize() {
         print("DEEPAR INIT")
-        deepAR.showStats(true)
-        
-        deepAR.startCapture(withOutputWidth: 1080, outputHeight: 1920, subframe: CGRect(x: 0, y: 0, width: 1, height: 1))
+
+        deepAR.startCapture(withOutputWidth: 720, outputHeight: 1280, subframe: CGRect(x: 0, y: 0, width: 1, height: 1))
     }
+   
     
     ///Frames available should be triggered when enque camera frames are available
     public func frameAvailable(_ sampleBuffer: CMSampleBuffer!) {
-        //print("frameAvailable")
         latestBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
+        recordVideoFromFrames(didOutput: sampleBuffer);
         
         ///update preview in flutter
         registry.textureFrameAvailable(textureId)
     }
+    
     
     public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
         if latestBuffer == nil {
@@ -141,10 +139,97 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture,  DeepAR
         }
         return Unmanaged<CVPixelBuffer>.passRetained(latestBuffer)
     }
+
+    private enum _CaptureState {
+           case idle, start, capturing, end
+       }
+    private var _assetWriter: AVAssetWriter?
+    private var _assetWriterInput: AVAssetWriterInput?
+    private var _adpater: AVAssetWriterInputPixelBufferAdaptor?
+    private var _captureState = _CaptureState.idle
+    private var _filename = ""
+    private var _time: Double = 0
+
     
-    
+    func recordVideoFromFrames( didOutput sampleBuffer: CMSampleBuffer) {
+          switch _captureState {
+          case .start:
+              let timestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer).seconds
+              // Set up recorder
+              _filename = UUID().uuidString
+              let videoPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("\(_filename).mov")
+              let writer = try! AVAssetWriter(outputURL: videoPath, fileType: .mov)
+             
+              let settings = AVCaptureVideoDataOutput().recommendedVideoSettingsForAssetWriter(writingTo: .mp4)
+              let input = AVAssetWriterInput(mediaType: .video, outputSettings: settings) // [AVVideoCodecKey: AVVideoCodecType.h264, AVVideoWidthKey: 1920, AVVideoHeightKey: 1080])
+              input.mediaTimeScale = CMTimeScale(bitPattern: 600)
+              input.expectsMediaDataInRealTime = true
+//              input.transform = CGAffineTransform(rotationAngle: .pi/2)
+              let adapter = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: input, sourcePixelBufferAttributes: nil)
+              if writer.canAdd(input) {
+                  writer.add(input)
+              }
+              writer.startWriting()
+              writer.startSession(atSourceTime: .zero)
+              _assetWriter = writer
+              _assetWriterInput = input
+              _adpater = adapter
+              _captureState = .capturing
+              _time = timestamp
+          case .capturing:
+              print("appending frame");
+              let timestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer).seconds
+              if _assetWriterInput?.isReadyForMoreMediaData == true {
+                  let time = CMTime(seconds: timestamp - _time, preferredTimescale: CMTimeScale(600))
+                  _adpater?.append(CMSampleBufferGetImageBuffer(sampleBuffer)!, withPresentationTime: time)
+              }
+              break
+          case .end:
+              guard _assetWriterInput?.isReadyForMoreMediaData == true, _assetWriter!.status != .failed else { break }
+              let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("\(_filename).mov")
+              _assetWriterInput?.markAsFinished()
+              _assetWriter?.finishWriting { [weak self] in
+                  self?._captureState = .idle
+                  self?._assetWriter = nil
+                  self?._assetWriterInput = nil
+                  DispatchQueue.main.async {
+                      let status = PHPhotoLibrary.authorizationStatus()
+
+                         //no access granted yet
+                         if status == .notDetermined || status == .denied{
+                             PHPhotoLibrary.requestAuthorization({auth in
+                                 if auth == .authorized{
+                                     self?.saveInPhotoLibrary(url)
+                                 }else{
+                                     print("user denied access to photo Library")
+                                 }
+                             })
+
+                         //access granted by user already
+                         }else{
+                             self?.saveInPhotoLibrary(url)
+                         }
+                  }
+              }
+          default:
+              break
+          }
+      }
+    private func saveInPhotoLibrary(_ url:URL){
+        PHPhotoLibrary.shared().performChanges({
+
+            //add video to PhotoLibrary here
+            PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: url)
+        }) { completed, error in
+            if completed {
+                print("save complete! path : " + url.absoluteString)
+            }else{
+                print("save failed")
+            }
+        }
+    }
     private func setUpCamera(result: @escaping FlutterResult){
-        let size = ["width": 1080.0, "height": 1920.0]
+        let size = ["width": 720.0, "height": 1280.0]
         let answer: [String : Any?] = ["textureId": textureId, "size": size]
         result(answer)
         
