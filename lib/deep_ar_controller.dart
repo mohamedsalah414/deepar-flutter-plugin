@@ -78,6 +78,10 @@ class DeepArController {
     _deepArPlatformHandler.stopRecordingVideo();
   }
 
+  void flipCamera() {
+    _deepArPlatformHandler.flipCamera();
+  }
+
   Future<String?> checkVersion() {
     return _deepArPlatformHandler.checkVersion();
   }

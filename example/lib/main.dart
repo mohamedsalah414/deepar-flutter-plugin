@@ -133,7 +133,7 @@ class _HomeState extends State<Home> {
                   Icons.arrow_back_ios,
                   color: Colors.white70,
                 )),
-            ElevatedButton(
+            IconButton(
                 onPressed: () {
                   if (isRecording) {
                     _controller.stopVideoRecording();
@@ -145,8 +145,17 @@ class _HomeState extends State<Home> {
 
                   setState(() {});
                 },
-                child:
-                    Text(isRecording ? "Stop Recording" : "Start Recording")),
+                iconSize: 50,
+                color: Colors.white70,
+                icon: Icon(isRecording ? Icons.videocam_sharp : Icons.videocam_outlined)),
+            const SizedBox(width: 20),
+            IconButton(
+                onPressed: () {
+                  _controller.flipCamera();
+                },
+                iconSize: 50,
+                color: Colors.white70,
+                icon: const Icon(Icons.cameraswitch)),
             IconButton(
                 iconSize: 60,
                 onPressed: () {

@@ -59,4 +59,8 @@ class DeepArPlatformHandler {
   Future<String?> checkVersion() async {
     return await _channel.invokeMethod<String?>(PlatformStrings.checkVersion);
   }
+
+  Future<void> flipCamera() async {
+    await _channel.invokeMethod("flip_camera");
+  }
 }

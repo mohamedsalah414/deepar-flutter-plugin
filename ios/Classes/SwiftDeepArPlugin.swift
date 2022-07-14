@@ -56,6 +56,8 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin, FlutterTexture,  DeepAR
             deepAR.startVideoRecording(withOutputWidth: 720, outputHeight: 1280)
         case "stop_recording_video":
             deepAR.finishVideoRecording()
+        case "flip_camera":
+            cameraController.position = cameraController.position == .back ? .front : .back
         default:
             result("Failed to call iOS platform method")
         }
