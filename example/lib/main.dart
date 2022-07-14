@@ -51,6 +51,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   late final DeepArController _controller;
   bool isRecording = false;
+  bool isFlashOn = false;
   String version = '';
   List<String> effectsList = [];
   int _effectIndex = 0;
@@ -83,6 +84,20 @@ class _HomeState extends State<Home> {
                       child: Text(
                           "Something went wrong while initializing DeepAR"),
                     ),
+              Positioned(
+                  top: 10,
+                  right: 10,
+                  child: IconButton(
+                      onPressed: () {
+                        _controller.toggleFlash();
+                        setState(() {
+                          isFlashOn = !isFlashOn;
+                        });
+                      },
+                      color: Colors.white70,
+                      iconSize: 40,
+                      icon:
+                          Icon(isFlashOn ? Icons.flash_on : Icons.flash_off))),
               _bottomButtons(),
             ],
           )
@@ -147,7 +162,9 @@ class _HomeState extends State<Home> {
                 },
                 iconSize: 50,
                 color: Colors.white70,
-                icon: Icon(isRecording ? Icons.videocam_sharp : Icons.videocam_outlined)),
+                icon: Icon(isRecording
+                    ? Icons.videocam_sharp
+                    : Icons.videocam_outlined)),
             const SizedBox(width: 20),
             IconButton(
                 onPressed: () {

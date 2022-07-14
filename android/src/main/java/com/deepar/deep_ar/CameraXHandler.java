@@ -8,9 +8,11 @@ import android.util.Size;
 import android.view.Surface;
 
 import androidx.annotation.NonNull;
+import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
+import androidx.camera.core.TorchState;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleOwner;
@@ -48,6 +50,7 @@ public class CameraXHandler implements MethodChannel.MethodCallHandler {
 
     private int defaultLensFacing = CameraSelector.LENS_FACING_FRONT;
     private int lensFacing = defaultLensFacing;
+    private Camera camera;
 
 
     @Override
@@ -59,13 +62,27 @@ public class CameraXHandler implements MethodChannel.MethodCallHandler {
                 break;
             case "flip_camera":
                 flipCamera();
+            case "toggle_flash":
+                try {
+                    if (camera != null && camera.getCameraInfo().hasFlashUnit()) {
+                        // TorchState.OFF = 0; TorchState.ON = 1
+                        boolean isFlashOn = camera.getCameraInfo().getTorchState().getValue() == TorchState.ON;
+
+                        camera.getCameraControl().enableTorch(!isFlashOn);
+
+
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
 
                 break;
         }
     }
 
     private void flipCamera() {
-        lensFacing = lensFacing ==  CameraSelector.LENS_FACING_FRONT ?  CameraSelector.LENS_FACING_BACK :  CameraSelector.LENS_FACING_FRONT ;
+        lensFacing = lensFacing == CameraSelector.LENS_FACING_FRONT ? CameraSelector.LENS_FACING_BACK : CameraSelector.LENS_FACING_FRONT;
         //unbind immediately to avoid mirrored frame.
         ProcessCameraProvider cameraProvider = null;
         try {
@@ -167,7 +184,7 @@ public class CameraXHandler implements MethodChannel.MethodCallHandler {
 
                     processCameraProvider.unbindAll();
 
-                    processCameraProvider.bindToLifecycle((LifecycleOwner) activity,
+                    camera = processCameraProvider.bindToLifecycle((LifecycleOwner) activity,
                             cameraSelector, imageAnalysis);
 
                     if (result != null) {
