@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:ui';
+
 import 'package:deep_ar/platform_strings.dart';
 import 'package:deep_ar/resolution_preset.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +14,8 @@ class DeepArPlatformHandler {
       MethodChannel(PlatformStrings.generalChannel);
   static const MethodChannel _cameraXChannel =
       MethodChannel(PlatformStrings.cameraXChannel);
+  MethodChannel _avCameraChannel(int view) =>
+      MethodChannel(PlatformStrings.avCameraChannel);
 
   static Future<String?> get platformVersion async {
     final String? version = await _channel.invokeMethod('getPlatformVersion');
@@ -30,15 +35,17 @@ class DeepArPlatformHandler {
     return texturedId;
   }
 
-  Future<Map<String, dynamic>?> startCameraIos() async {
-    return await _channel
-        .invokeMapMethod<String, dynamic>(PlatformStrings.startCamera);
-  }
-
-  Future<String?> switchEffect(String effect) {
-    return _channel.invokeMethod<String>(PlatformStrings.switchEffect, {
-      PlatformStrings.effect: effect,
-    });
+  Future<String?> switchEffect(String effect, int view) {
+    if (Platform.isAndroid) {
+      return _channel.invokeMethod<String>(PlatformStrings.switchEffect, {
+        PlatformStrings.effect: effect,
+      });
+    } else {
+      return _avCameraChannel(view)
+          .invokeMethod<String>(PlatformStrings.switchEffect, {
+        PlatformStrings.effect: effect,
+      });
+    }
   }
 
   Future<void> startRecordingVideo({String? filePath}) async {
@@ -58,5 +65,15 @@ class DeepArPlatformHandler {
 
   Future<String?> checkVersion() async {
     return await _channel.invokeMethod<String?>(PlatformStrings.checkVersion);
+  }
+
+  Future<Size?> getResolutionDimensions(int view) async {
+    final result = await _avCameraChannel(view)
+        .invokeMethod<String?>(PlatformStrings.getResolution);
+    if (result != null) {
+      double width = double.parse(result.split(" ")[0]);
+      double height = double.parse(result.split(" ")[1]);
+      return Size(width, height);
+    }
   }
 }

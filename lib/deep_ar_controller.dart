@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'dart:math';
 import 'package:deep_ar/deep_ar_platform_handler.dart';
+import 'package:deep_ar/platform_strings.dart';
 import 'package:deep_ar/resolution_preset.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class DeepArController {
   DeepArController() : super();
@@ -17,44 +19,68 @@ class DeepArController {
   bool get isInitialized => textureId != null;
   bool isPermission = false;
   double get aspectRatio => _aspectRatio;
-
+  String? _iosLicenseKey;
   Future<void> initialize(
-      {required String licenseKey, required Resolution preset}) async {
+      {String? androidLicenseKey,
+      String? iosLicenseKey,
+      required Resolution preset}) async {
+    assert(androidLicenseKey != null || iosLicenseKey != null,
+        "Both android and iOS license keys cannot be null");
+
+    _iosLicenseKey = iosLicenseKey;
     resolution = preset;
     isPermission = await _deepArPlatformHandler.checkAllPermission() ?? false;
-    if (isPermission) {
-      if (Platform.isAndroid) {
-        // Android
-        String? dimensions =
-            await _deepArPlatformHandler.initialize(licenseKey, preset);
-        if (dimensions != null) {
-          double width = double.parse(dimensions.split(" ")[0]);
-          double height = double.parse(dimensions.split(" ")[1]);
-          _aspectRatio = width / height;
-          textureId = await _deepArPlatformHandler.startCameraAndroid();
-        }
-      } else {
-        // iOS
-        String? response =
-            await _deepArPlatformHandler.initialize(licenseKey, preset);
-        if (response == "Initialized") {
-          final mapData = await _deepArPlatformHandler.startCameraIos();
-          textureId = mapData?['textureId'];
-          size = toSize(mapData?['size']);
-          _aspectRatio = size!.width / size!.height;
-        }
-      }
+    if (!isPermission) return;
 
-      print("TEXTURE_ID : $textureId");
+    if (Platform.isAndroid) {
+      assert(androidLicenseKey != null, "androidLicenseKey missing");
+      String? dimensions =
+          await _deepArPlatformHandler.initialize(androidLicenseKey!, preset);
+      if (dimensions != null) {
+        double width = double.parse(dimensions.split(" ")[0]);
+        double height = double.parse(dimensions.split(" ")[1]);
+        _aspectRatio = width / height;
+        textureId = await _deepArPlatformHandler.startCameraAndroid();
+      }
+    } else if (Platform.isIOS) {
+      assert(iosLicenseKey != null, "iosLicenseKey missing");
+      //TODO: Try to predict size before intialization
+      size = const Size(500, 500);
+      _aspectRatio = size!.width / size!.height;
+      textureId = -1;
+    } else {
+      throw ("Platform not supported");
     }
   }
 
-  Widget buildPreview() {
-    return Texture(textureId: textureId!);
+  Widget buildPreview({Function()? oniOSViewCreated}) {
+    if (Platform.isAndroid) {
+      return Texture(textureId: textureId!);
+    } else if (Platform.isIOS) {
+      return UiKitView(
+          viewType: "deep_ar_view",
+          layoutDirection: TextDirection.ltr,
+          creationParams: <String, dynamic>{
+            PlatformStrings.licenseKey: _iosLicenseKey,
+            PlatformStrings.resolution: resolution.stringValue
+          },
+          creationParamsCodec: const StandardMessageCodec(),
+          onPlatformViewCreated: ((id) {
+            textureId = id;
+            _deepArPlatformHandler
+                .getResolutionDimensions(textureId!)
+                .then((value) {
+              _aspectRatio = value!.width / value.height;
+              oniOSViewCreated?.call();
+            });
+          }));
+    } else {
+      throw ("Platform not supported.");
+    }
   }
 
   Future<String?> switchEffect(String effect) {
-    return _deepArPlatformHandler.switchEffect(effect);
+    return _deepArPlatformHandler.switchEffect(effect, textureId!);
   }
 
   Future<void> startVideoRecording() async {

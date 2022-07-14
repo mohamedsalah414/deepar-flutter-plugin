@@ -1,0 +1,174 @@
+//
+//  DeepArCamera.swift
+//  deep_ar
+//
+//  Created by Samyak Jain on 14/07/22.
+//
+import DeepAR
+import Foundation
+
+enum PictureQuality: String {
+    case low   = "low"
+    case medium   = "medium"
+    case high = "high"
+    case veryHigh = "veryHigh"
+}
+
+class DeepARCameraFactory: NSObject, FlutterPlatformViewFactory {
+    private var messenger: FlutterBinaryMessenger
+    private var registrar: FlutterPluginRegistrar
+
+    init(messenger: FlutterBinaryMessenger, registrar: FlutterPluginRegistrar) {
+        self.messenger = messenger
+        self.registrar = registrar;
+        super.init()
+    }
+
+    func create(
+            withFrame frame: CGRect,
+            viewIdentifier viewId: Int64,
+            arguments args: Any?
+        ) -> FlutterPlatformView {
+            return DeepARCameraView(
+                frame: frame,
+                viewIdentifier: viewId,
+                arguments: args,
+                binaryMessenger: messenger,registrar: registrar)
+        }
+    public func createArgsCodec() -> FlutterMessageCodec & NSObjectProtocol {
+        return FlutterStandardMessageCodec.sharedInstance()
+    }
+}
+
+
+class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
+    private var isRecordingInProcess: Bool = false
+    
+    private var deepAR: DeepAR!
+    private var cameraController: CameraController!
+    private var arView: ARView!
+    private var frame:CGRect!
+    
+    
+    private var pictureQuality:PictureQuality!
+    private var licenseKey:String!
+     
+    
+    private var channel:FlutterMethodChannel!
+    private var registrar: FlutterPluginRegistrar!
+    
+    init(
+         frame: CGRect,
+         viewIdentifier viewId: Int64,
+         arguments args: Any?,
+         binaryMessenger messenger: FlutterBinaryMessenger?,
+         registrar: FlutterPluginRegistrar
+     ) {
+         print("new native view");
+         super.init()
+         print("0");
+         self.frame = frame;
+         self.registrar = registrar
+         print("1");
+         if let dict = args as? [String: Any] {
+             print("license key");
+             print(dict["license_key"] as? String ?? "");
+             self.licenseKey = (dict["license_key"] as? String ?? "")
+             self.pictureQuality = PictureQuality.init(rawValue: dict["resolution"] as? String ?? "medium")
+         }
+         print("2");
+         channel = FlutterMethodChannel(name: "deep_ar/view", binaryMessenger: messenger!);
+         channel.setMethodCallHandler(methodHandler);
+         print("3");
+         createNativeView()
+         print("4");
+         
+         
+         
+    }
+    
+    func methodHandler(_ call: FlutterMethodCall, result: @escaping FlutterResult){
+        let args = call.arguments as? [String : Any]
+        switch call.method{
+        case "switch_effect":
+            let effect:String = args?["effect"] as! String
+            let key = registrar?.lookupKey(forAsset: effect)
+            let topPath = Bundle.main.path(forResource: key, ofType: nil)
+            deepAR.switchEffect(withSlot: "effect", path: topPath)
+        case "start_recording_video":
+            startRecordingVideo();
+            ///TODO: Send confirmation when callback received
+            result("Starting to record");
+        case "stop_recording_video":
+            finishRecordingVideo();
+            ///TODO: Send confirmation when callback received
+            result("stopping recording");
+        case "get_resolution":
+//            let width: Int32 = Int32(deepAR.renderingResolution.width)
+//            let height: Int32 =  Int32(deepAR.renderingResolution.height)
+            result(String(1280) + " " + String(720));
+        default:
+            result("No platform method found")
+        }
+       
+    }
+
+     func view() -> UIView {
+         return arView
+     }
+
+     func createNativeView(){
+        self.deepAR = DeepAR()
+        self.deepAR.delegate = self
+        self.deepAR.setLicenseKey(licenseKey)
+                 
+        cameraController = CameraController()
+         
+        cameraController.preset = presetForPictureQuality(pictureQuality: pictureQuality);
+        cameraController.videoOrientation = .portrait;
+        cameraController.deepAR = self.deepAR
+        self.deepAR.videoRecordingWarmupEnabled = false;
+        
+         
+         deepAR.changeLiveMode(true);
+         
+         self.arView = self.deepAR.createARView(withFrame: self.frame) as? ARView
+         cameraController.startCamera()
+     }
+    func startRecordingVideo(){
+        let width: Int32 = Int32(deepAR.renderingResolution.width)
+        let height: Int32 =  Int32(deepAR.renderingResolution.height)
+               
+        deepAR.startVideoRecording(withOutputWidth: width, outputHeight: height)
+        isRecordingInProcess = true
+    }
+    func finishRecordingVideo(){
+        deepAR.finishVideoRecording();
+    }
+    
+    func presetForPictureQuality(pictureQuality: PictureQuality) -> AVCaptureSession.Preset {
+        switch pictureQuality {
+        case .low:
+            return AVCaptureSession.Preset.vga640x480;
+        case .medium:
+            return AVCaptureSession.Preset.vga640x480;
+        case .high:
+            return AVCaptureSession.Preset.hd1280x720
+        case .veryHigh:
+            return AVCaptureSession.Preset.hd1920x1080;
+        }
+    }
+    
+    func resolutionForPictureQuality (pictureQuality: PictureQuality) -> CGSize {
+        switch pictureQuality {
+        case .low:
+            return CGSize(width: 640, height: 480);
+        case .medium:
+            return CGSize(width: 640, height: 480);
+        case .high:
+            return CGSize(width: 1280, height: 720);
+        case .veryHigh:
+            return CGSize(width: 1920, height: 1080);
+        }
+    }
+}
