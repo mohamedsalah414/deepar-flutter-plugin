@@ -61,6 +61,6 @@ class DeepArPlatformHandler {
   }
 
   Future<void> flipCamera() async {
-    await _channel.invokeMethod("flip_camera");
+    await _cameraXChannel.invokeMethod("flip_camera");
   }
 }
