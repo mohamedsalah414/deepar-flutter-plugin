@@ -10,8 +10,16 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.media.Image;
+import android.media.MediaScannerConnection;
+import android.os.Environment;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Surface;
+import android.widget.Toast;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.Date;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -203,7 +211,22 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
 
     @Override
     public void screenshotTaken(Bitmap bitmap) {
+        CharSequence now = DateFormat.format("yyyy_MM_dd_hh_mm_ss", new Date());
+        try {
+            //File imageFile = new File(activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "image_" + now + ".jpg");
 
+            // TODO: 15/07/22 replace with correct path
+            File imageFile = new File("/storage/emulated/0/Download", "image_" + now + ".jpg");
+            FileOutputStream outputStream = new FileOutputStream(imageFile);
+            int quality = 100;
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream);
+            outputStream.flush();
+            outputStream.close();
+            MediaScannerConnection.scanFile(activity, new String[]{imageFile.toString()}, null, null);
+            Toast.makeText(activity, "Screenshot " + imageFile.getName() + " saved.", Toast.LENGTH_SHORT).show();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

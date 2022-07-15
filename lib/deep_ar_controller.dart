@@ -119,7 +119,7 @@ class DeepArController {
 
   void takeScreenshot() {
     if (Platform.isAndroid) {
-      //_deepArPlatformHandler.flipCamera();
+      _deepArPlatformHandler.takeScreenShot();
     } else {
       _deepArPlatformHandler.takeScreenShotIos(textureId!);
     }

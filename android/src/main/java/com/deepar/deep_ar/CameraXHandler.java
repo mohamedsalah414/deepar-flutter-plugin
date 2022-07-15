@@ -62,6 +62,8 @@ public class CameraXHandler implements MethodChannel.MethodCallHandler {
                 break;
             case "flip_camera":
                 flipCamera();
+            case "take_screenshot":
+                deepAR.takeScreenshot();
             case "toggle_flash":
                 try {
                     if (camera != null && camera.getCameraInfo().hasFlashUnit()) {
