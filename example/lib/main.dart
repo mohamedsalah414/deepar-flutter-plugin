@@ -58,7 +58,9 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     _controller = DeepArController();
+
     _initializeDeepAr();
+    _askPermission();
     super.initState();
   }
 
@@ -156,6 +158,10 @@ class _HomeState extends State<Home> {
           preset: Resolution.high,
         )
         .then((value) => setState(() {}));
+  }
+
+  void _askPermission() {
+    _controller.askMediaPermission().then((value) => setState(() {}));
   }
 
   /// Sample option which can be performed

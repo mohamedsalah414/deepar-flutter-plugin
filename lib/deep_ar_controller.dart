@@ -6,6 +6,8 @@ import 'package:deep_ar/resolution_preset.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:permission_handler/permission_handler.dart';
+
 class DeepArController {
   DeepArController() : super();
   final DeepArPlatformHandler _deepArPlatformHandler = DeepArPlatformHandler();
@@ -131,7 +133,6 @@ class DeepArController {
     } else {
       return _deepArPlatformHandler.toggleFlashIos(textureId!);
     }
-    
   }
 
   Future<String?> checkVersion() {
@@ -142,5 +143,21 @@ class DeepArController {
     final width = data['width'];
     final height = data['height'];
     return Size(width, height);
+  }
+
+  Future<bool> askMediaPermission() async {
+    Map<Permission, PermissionStatus> statuses = await [
+      Permission.camera,
+      Permission.microphone,
+      Permission.storage,
+    ].request();
+
+    if (await Permission.camera.isGranted &&
+        await Permission.microphone.isGranted &&
+        await Permission.storage.isGranted) {
+      return true;
+    }
+
+    return false;
   }
 }
