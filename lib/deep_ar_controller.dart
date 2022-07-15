@@ -110,7 +110,12 @@ class DeepArController {
   }
 
   void flipCamera() {
-    _deepArPlatformHandler.flipCamera();
+    if (Platform.isAndroid) {
+      _deepArPlatformHandler.flipCamera();
+    } else {
+      _deepArPlatformHandler.flipCameraIos(textureId!);
+    }
+    
   }
 
   void toggleFlash() {

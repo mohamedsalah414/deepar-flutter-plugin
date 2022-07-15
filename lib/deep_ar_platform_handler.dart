@@ -91,6 +91,10 @@ class DeepArPlatformHandler {
     await _cameraXChannel.invokeMethod("flip_camera");
   }
 
+  Future<void> flipCameraIos(int view) async {
+    await _avCameraChannel(view).invokeMethod<String>("flip_camera");
+  }
+
   Future<void> toggleFlash() async {
     await _cameraXChannel.invokeMethod("toggle_flash");
   }

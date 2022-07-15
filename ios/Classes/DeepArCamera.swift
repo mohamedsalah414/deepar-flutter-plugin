@@ -18,24 +18,24 @@ enum PictureQuality: String {
 class DeepARCameraFactory: NSObject, FlutterPlatformViewFactory {
     private var messenger: FlutterBinaryMessenger
     private var registrar: FlutterPluginRegistrar
-
+    
     init(messenger: FlutterBinaryMessenger, registrar: FlutterPluginRegistrar) {
         self.messenger = messenger
         self.registrar = registrar;
         super.init()
     }
-
+    
     func create(
-            withFrame frame: CGRect,
-            viewIdentifier viewId: Int64,
-            arguments args: Any?
-        ) -> FlutterPlatformView {
-            return DeepARCameraView(
-                frame: frame,
-                viewIdentifier: viewId,
-                arguments: args,
-                binaryMessenger: messenger,registrar: registrar)
-        }
+        withFrame frame: CGRect,
+        viewIdentifier viewId: Int64,
+        arguments args: Any?
+    ) -> FlutterPlatformView {
+        return DeepARCameraView(
+            frame: frame,
+            viewIdentifier: viewId,
+            arguments: args,
+            binaryMessenger: messenger,registrar: registrar)
+    }
     public func createArgsCodec() -> FlutterMessageCodec & NSObjectProtocol {
         return FlutterStandardMessageCodec.sharedInstance()
     }
@@ -53,39 +53,39 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
     
     private var pictureQuality:PictureQuality!
     private var licenseKey:String!
-     
+    
     
     private var channel:FlutterMethodChannel!
     private var registrar: FlutterPluginRegistrar!
     
     init(
-         frame: CGRect,
-         viewIdentifier viewId: Int64,
-         arguments args: Any?,
-         binaryMessenger messenger: FlutterBinaryMessenger?,
-         registrar: FlutterPluginRegistrar
-     ) {
-         print("new native view");
-         super.init()
-         print("0");
-         self.frame = frame;
-         self.registrar = registrar
-         print("1");
-         if let dict = args as? [String: Any] {
-             print("license key");
-             print(dict["license_key"] as? String ?? "");
-             self.licenseKey = (dict["license_key"] as? String ?? "")
-             self.pictureQuality = PictureQuality.init(rawValue: dict["resolution"] as? String ?? "medium")
-         }
-         print("2");
-         channel = FlutterMethodChannel(name: "deep_ar/view", binaryMessenger: messenger!);
-         channel.setMethodCallHandler(methodHandler);
-         print("3");
-         createNativeView()
-         print("4");
-         
-         
-         
+        frame: CGRect,
+        viewIdentifier viewId: Int64,
+        arguments args: Any?,
+        binaryMessenger messenger: FlutterBinaryMessenger?,
+        registrar: FlutterPluginRegistrar
+    ) {
+        print("new native view");
+        super.init()
+        print("0");
+        self.frame = frame;
+        self.registrar = registrar
+        print("1");
+        if let dict = args as? [String: Any] {
+            print("license key");
+            print(dict["license_key"] as? String ?? "");
+            self.licenseKey = (dict["license_key"] as? String ?? "")
+            self.pictureQuality = PictureQuality.init(rawValue: dict["resolution"] as? String ?? "medium")
+        }
+        print("2");
+        channel = FlutterMethodChannel(name: "deep_ar/view", binaryMessenger: messenger!);
+        channel.setMethodCallHandler(methodHandler);
+        print("3");
+        createNativeView()
+        print("4");
+        
+        
+        
     }
     
     func methodHandler(_ call: FlutterMethodCall, result: @escaping FlutterResult){
@@ -105,41 +105,44 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
             ///TODO: Send confirmation when callback received
             result("stopping recording");
         case "get_resolution":
-//            let width: Int32 = Int32(deepAR.renderingResolution.width)
-//            let height: Int32 =  Int32(deepAR.renderingResolution.height)
+            //            let width: Int32 = Int32(deepAR.renderingResolution.width)
+            //            let height: Int32 =  Int32(deepAR.renderingResolution.height)
             result(String(1280) + " " + String(720));
+            
+        case "flip_camera":
+            cameraController.position = cameraController.position == .back ? .front : .back
         default:
             result("No platform method found")
         }
-       
+        
     }
-
-     func view() -> UIView {
-         return arView
-     }
-
-     func createNativeView(){
+    
+    func view() -> UIView {
+        return arView
+    }
+    
+    func createNativeView(){
         self.deepAR = DeepAR()
         self.deepAR.delegate = self
         self.deepAR.setLicenseKey(licenseKey)
-                 
+        
         cameraController = CameraController()
-         
+        
         cameraController.preset = presetForPictureQuality(pictureQuality: pictureQuality);
         cameraController.videoOrientation = .portrait;
         cameraController.deepAR = self.deepAR
         self.deepAR.videoRecordingWarmupEnabled = false;
         
-         
-         deepAR.changeLiveMode(true);
-         
-         self.arView = self.deepAR.createARView(withFrame: self.frame) as? ARView
-         cameraController.startCamera()
-     }
+        
+        deepAR.changeLiveMode(true);
+        
+        self.arView = self.deepAR.createARView(withFrame: self.frame) as? ARView
+        cameraController.startCamera()
+    }
     func startRecordingVideo(){
         let width: Int32 = Int32(deepAR.renderingResolution.width)
         let height: Int32 =  Int32(deepAR.renderingResolution.height)
-               
+        
         deepAR.startVideoRecording(withOutputWidth: width, outputHeight: height)
         isRecordingInProcess = true
     }
@@ -158,12 +161,12 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
     func didFinishVideoRecording(_ videoFilePath: String!) {
         
         NSLog("didFinishVideoRecording!!!!!")
-
+        
         let documentsDirectory = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
         let components = videoFilePath.components(separatedBy: "/")
         guard let last = components.last else { return }
         let destination = URL(fileURLWithPath: String(format: "%@/%@", documentsDirectory, last))
-    
+        
         let playerController = AVPlayerViewController()
         let player = AVPlayer(url: destination)
         playerController.player = player
