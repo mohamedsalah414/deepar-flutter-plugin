@@ -106,4 +106,8 @@ class DeepArPlatformHandler {
   Future<void> toggleFlash() async {
     await _cameraXChannel.invokeMethod("toggle_flash");
   }
+
+  Future<void> toggleFlashIos(int view) async {
+    await _avCameraChannel(view).invokeMethod("toggle_flash");
+  }
 }

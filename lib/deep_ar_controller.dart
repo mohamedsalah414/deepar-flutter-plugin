@@ -126,7 +126,12 @@ class DeepArController {
   }
 
   void toggleFlash() {
-    _deepArPlatformHandler.toggleFlash();
+    if (Platform.isAndroid) {
+      _deepArPlatformHandler.toggleFlash();
+    } else {
+      _deepArPlatformHandler.toggleFlashIos(textureId!);
+    }
+    
   }
 
   Future<String?> checkVersion() {

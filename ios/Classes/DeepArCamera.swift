@@ -113,6 +113,9 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
             result("Screenshot called");
         case "flip_camera":
             cameraController.position = cameraController.position == .back ? .front : .back
+        case "toggle_flash":
+            let isFlash:Bool = toggleFlash()
+            result(isFlash);
         default:
             result("No platform method found")
         }
@@ -143,6 +146,42 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         
         NotificationCenter.default.addObserver(self, selector: #selector(orientationDidChange), name: UIDevice.orientationDidChangeNotification, object: nil)
     }
+    
+    func toggleFlash() -> Bool {
+        if cameraController.position == .front {
+            // Prevent flash when front camera is on
+            return false
+        }
+        
+        guard let captureDevice = AVCaptureDevice.default(for: AVMediaType.video) else {
+            return false
+        }
+        
+        if captureDevice.hasTorch {
+            do {
+                let _: () = try captureDevice.lockForConfiguration()
+            } catch {
+                return false
+            }
+            
+            if captureDevice.isTorchActive {
+                captureDevice.torchMode = AVCaptureDevice.TorchMode.off
+            } else {
+                
+                do {
+                    let _ = try captureDevice.setTorchModeOn(level: 1.0)
+                } catch {
+                    return false
+                }
+            }
+            
+            captureDevice.unlockForConfiguration()
+        }
+        
+        return true // flash ON
+    }
+    
+    
     func startRecordingVideo(){
         let width: Int32 = Int32(deepAR.renderingResolution.width)
         let height: Int32 =  Int32(deepAR.renderingResolution.height)
@@ -150,6 +189,7 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         deepAR.startVideoRecording(withOutputWidth: width, outputHeight: height)
         isRecordingInProcess = true
     }
+    
     func finishRecordingVideo(){
         deepAR.finishVideoRecording();
     }
