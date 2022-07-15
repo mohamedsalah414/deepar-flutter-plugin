@@ -75,5 +75,12 @@ class DeepArPlatformHandler {
       double height = double.parse(result.split(" ")[1]);
       return Size(width, height);
     }
+    Future<void> flipCamera() async {
+      await _cameraXChannel.invokeMethod("flip_camera");
+    }
+
+    Future<void> toggleFlash() async {
+      await _cameraXChannel.invokeMethod("toggle_flash");
+    }
   }
 }
