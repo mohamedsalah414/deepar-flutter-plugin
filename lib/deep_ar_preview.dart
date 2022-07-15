@@ -10,14 +10,9 @@ class DeepArPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return deepArController.isInitialized
-        ? AspectRatio(
-            aspectRatio: Platform.isAndroid
-                ? (1 / deepArController.aspectRatio)
-                : deepArController.aspectRatio,
-            child: Platform.isAndroid
-                ? deepArController.buildPreview()
-                : _DeepArIosPreview(deepArController),
-          )
+        ? Platform.isAndroid
+            ? deepArController.buildPreview()
+            : _DeepArIosPreview(deepArController)
         : Container();
   }
 }
@@ -33,15 +28,8 @@ class _DeepArIosPreview extends StatefulWidget {
 class __DeepArIosPreviewState extends State<_DeepArIosPreview> {
   @override
   Widget build(BuildContext context) {
-    return widget.deepArController.isInitialized
-        ? AspectRatio(
-            aspectRatio: Platform.isAndroid
-                ? (1 / widget.deepArController.aspectRatio)
-                : widget.deepArController.aspectRatio,
-            child: widget.deepArController.buildPreview(oniOSViewCreated: () {
-              setState(() {});
-            }),
-          )
-        : Container();
+    return widget.deepArController.buildPreview(oniOSViewCreated: () {
+      setState(() {});
+    });
   }
 }
