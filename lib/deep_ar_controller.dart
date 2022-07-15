@@ -115,7 +115,14 @@ class DeepArController {
     } else {
       _deepArPlatformHandler.flipCameraIos(textureId!);
     }
-    
+  }
+
+  void takeScreenshot() {
+    if (Platform.isAndroid) {
+      //_deepArPlatformHandler.flipCamera();
+    } else {
+      _deepArPlatformHandler.takeScreenShotIos(textureId!);
+    }
   }
 
   void toggleFlash() {

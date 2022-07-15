@@ -108,7 +108,9 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
             //            let width: Int32 = Int32(deepAR.renderingResolution.width)
             //            let height: Int32 =  Int32(deepAR.renderingResolution.height)
             result(String(1280) + " " + String(720));
-            
+        case "take_screenshot":
+            deepAR.takeScreenshot()
+            result("Screenshot called");
         case "flip_camera":
             cameraController.position = cameraController.position == .back ? .front : .back
         default:
@@ -173,6 +175,10 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         UIApplication.shared.keyWindow?.rootViewController?.present(playerController, animated: true) {
             player.play()
         }
+    }
+    
+    func didTakeScreenshot(_ screenshot: UIImage!) {
+        UIImageWriteToSavedPhotosAlbum(screenshot, nil, nil, nil)
     }
     
     func presetForPictureQuality(pictureQuality: PictureQuality) -> AVCaptureSession.Preset {

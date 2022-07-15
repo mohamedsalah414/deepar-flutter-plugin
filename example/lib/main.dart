@@ -90,6 +90,17 @@ class _HomeState extends State<Home> {
                 color: Colors.white70,
                 iconSize: 40,
                 icon: Icon(isFlashOn ? Icons.flash_on : Icons.flash_off))),
+        Positioned(
+          top: 10,
+          left: 10,
+          child: IconButton(
+              onPressed: () {
+                _controller.flipCamera();
+              },
+              iconSize: 50,
+              color: Colors.white70,
+              icon: const Icon(Icons.cameraswitch)),
+        ),
         _mediaOptions(),
       ],
     );
@@ -189,11 +200,11 @@ class _HomeState extends State<Home> {
             const SizedBox(width: 20),
             IconButton(
                 onPressed: () {
-                  _controller.flipCamera();
+                  _controller.takeScreenshot();
                 },
-                iconSize: 50,
                 color: Colors.white70,
-                icon: const Icon(Icons.cameraswitch)),
+                iconSize: 40,
+                icon: const Icon(Icons.photo_camera)),
             IconButton(
                 iconSize: 60,
                 onPressed: () {
