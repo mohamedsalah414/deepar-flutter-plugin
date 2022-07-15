@@ -149,6 +149,7 @@ class DeepArController {
     Map<Permission, PermissionStatus> statuses = await [
       Permission.camera,
       Permission.microphone,
+      Permission.photos,
       Permission.storage,
     ].request();
 
