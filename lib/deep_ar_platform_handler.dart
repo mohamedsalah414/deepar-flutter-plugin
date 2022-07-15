@@ -103,11 +103,11 @@ class DeepArPlatformHandler {
     await _avCameraChannel(view).invokeMethod<String>("take_screenshot");
   }
 
-  Future<void> toggleFlash() async {
-    await _cameraXChannel.invokeMethod("toggle_flash");
+  Future<bool> toggleFlash() async {
+   return await _cameraXChannel.invokeMethod<bool>("toggle_flash") ?? false;
   }
 
-  Future<void> toggleFlashIos(int view) async {
-    await _avCameraChannel(view).invokeMethod("toggle_flash");
+  Future<bool> toggleFlashIos(int view) async {
+    return await _avCameraChannel(view).invokeMethod<bool>("toggle_flash") ?? false;
   }
 }

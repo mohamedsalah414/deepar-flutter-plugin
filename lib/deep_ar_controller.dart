@@ -125,11 +125,11 @@ class DeepArController {
     }
   }
 
-  void toggleFlash() {
+  Future<bool> toggleFlash() {
     if (Platform.isAndroid) {
-      _deepArPlatformHandler.toggleFlash();
+      return _deepArPlatformHandler.toggleFlash();
     } else {
-      _deepArPlatformHandler.toggleFlashIos(textureId!);
+      return _deepArPlatformHandler.toggleFlashIos(textureId!);
     }
     
   }

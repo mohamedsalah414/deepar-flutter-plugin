@@ -81,10 +81,10 @@ class _HomeState extends State<Home> {
             top: 10,
             right: 10,
             child: IconButton(
-                onPressed: () {
-                  _controller.toggleFlash();
+                onPressed: () async {
+                  bool status = await _controller.toggleFlash();
                   setState(() {
-                    isFlashOn = !isFlashOn;
+                    isFlashOn = status;
                   });
                 },
                 color: Colors.white70,

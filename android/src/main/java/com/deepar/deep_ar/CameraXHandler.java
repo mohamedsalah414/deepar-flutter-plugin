@@ -62,25 +62,33 @@ public class CameraXHandler implements MethodChannel.MethodCallHandler {
                 break;
             case "flip_camera":
                 flipCamera();
+                break;
             case "take_screenshot":
                 deepAR.takeScreenshot();
+                break;
             case "toggle_flash":
-                try {
-                    if (camera != null && camera.getCameraInfo().hasFlashUnit()) {
-                        // TorchState.OFF = 0; TorchState.ON = 1
-                        boolean isFlashOn = camera.getCameraInfo().getTorchState().getValue() == TorchState.ON;
-
-                        camera.getCameraControl().enableTorch(!isFlashOn);
-
-
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-
+                boolean isFlash= toggleFlash();
+                result.success(isFlash);
                 break;
         }
+    }
+
+    private boolean toggleFlash() {
+        try {
+            if (camera != null && camera.getCameraInfo().hasFlashUnit()) {
+                // TorchState.OFF = 0; TorchState.ON = 1
+                boolean isFlashOn = camera.getCameraInfo().getTorchState().getValue() == TorchState.ON;
+
+                camera.getCameraControl().enableTorch(!isFlashOn);
+
+                return !isFlashOn;
+
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
 
     private void flipCamera() {

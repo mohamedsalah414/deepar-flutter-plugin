@@ -161,7 +161,7 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
             do {
                 let _: () = try captureDevice.lockForConfiguration()
             } catch {
-                return false
+                print("error 1")
             }
             
             if captureDevice.isTorchActive {
@@ -170,15 +170,16 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
                 
                 do {
                     let _ = try captureDevice.setTorchModeOn(level: 1.0)
+                    return true // flash ON
                 } catch {
-                    return false
+                    print("error 2")
                 }
             }
             
             captureDevice.unlockForConfiguration()
         }
         
-        return true // flash ON
+        return false // flash OFF
     }
     
     
