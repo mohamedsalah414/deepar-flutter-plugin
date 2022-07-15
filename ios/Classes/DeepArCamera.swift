@@ -6,6 +6,7 @@
 //
 import DeepAR
 import Foundation
+import AVKit
 
 enum PictureQuality: String {
     case low   = "low"
@@ -144,6 +145,31 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
     }
     func finishRecordingVideo(){
         deepAR.finishVideoRecording();
+    }
+    
+    func didFinishPreparingForVideoRecording() {
+        NSLog("didFinishPreparingForVideoRecording!!!!!")
+    }
+    
+    func didStartVideoRecording() {
+        NSLog("didStartVideoRecording!!!!!")
+    }
+    
+    func didFinishVideoRecording(_ videoFilePath: String!) {
+        
+        NSLog("didFinishVideoRecording!!!!!")
+
+        let documentsDirectory = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
+        let components = videoFilePath.components(separatedBy: "/")
+        guard let last = components.last else { return }
+        let destination = URL(fileURLWithPath: String(format: "%@/%@", documentsDirectory, last))
+    
+        let playerController = AVPlayerViewController()
+        let player = AVPlayer(url: destination)
+        playerController.player = player
+        UIApplication.shared.keyWindow?.rootViewController?.present(playerController, animated: true) {
+            player.play()
+        }
     }
     
     func presetForPictureQuality(pictureQuality: PictureQuality) -> AVCaptureSession.Preset {

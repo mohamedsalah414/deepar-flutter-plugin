@@ -47,7 +47,6 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   late final DeepArController _controller;
-  bool isRecording = false;
   bool isFlashOn = false;
   String version = '';
   bool _isRecording = false;
@@ -71,46 +70,69 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    return _controller.isPermission
-        ? Stack(
-            children: [
-              _controller.isInitialized
-                  ? DeepArPreview(_controller)
-                  : const Center(
-                      child: Text(
-                          "Something went wrong while initializing DeepAR"),
-                    ),
-              Positioned(
-                  top: 10,
-                  right: 10,
-                  child: IconButton(
-                      onPressed: () {
-                        _controller.toggleFlash();
-                        setState(() {
-                          isFlashOn = !isFlashOn;
-                        });
-                      },
-                      color: Colors.white70,
-                      iconSize: 40,
-                      icon:
-                          Icon(isFlashOn ? Icons.flash_on : Icons.flash_off))),
-              
-              _mediaOptions(),
-            ],
-          )
-        : Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                    onPressed: () async {
-                      _initializeDeepAr();
-                    },
-                    child:
-                        const Text("Click here to update permission status")),
-              ],
-            ),
-          );
+    return Stack(
+      children: [
+        _controller.isInitialized
+            ? DeepArPreview(_controller)
+            : const Center(
+                child: Text("Something went wrong while initializing DeepAR"),
+              ),
+        Positioned(
+            top: 10,
+            right: 10,
+            child: IconButton(
+                onPressed: () {
+                  _controller.toggleFlash();
+                  setState(() {
+                    isFlashOn = !isFlashOn;
+                  });
+                },
+                color: Colors.white70,
+                iconSize: 40,
+                icon: Icon(isFlashOn ? Icons.flash_on : Icons.flash_off))),
+        _mediaOptions(),
+      ],
+    );
+
+    // return _controller.isPermission
+    //     ? Stack(
+    //         children: [
+    //           _controller.isInitialized
+    //               ? DeepArPreview(_controller)
+    //               : const Center(
+    //                   child: Text(
+    //                       "Something went wrong while initializing DeepAR"),
+    //                 ),
+    //           Positioned(
+    //               top: 10,
+    //               right: 10,
+    //               child: IconButton(
+    //                   onPressed: () {
+    //                     _controller.toggleFlash();
+    //                     setState(() {
+    //                       isFlashOn = !isFlashOn;
+    //                     });
+    //                   },
+    //                   color: Colors.white70,
+    //                   iconSize: 40,
+    //                   icon:
+    //                       Icon(isFlashOn ? Icons.flash_on : Icons.flash_off))),
+    //           _mediaOptions(),
+    //         ],
+    //       )
+    //     : Center(
+    //         child: Column(
+    //           mainAxisAlignment: MainAxisAlignment.center,
+    //           children: [
+    //             ElevatedButton(
+    //                 onPressed: () async {
+    //                   _initializeDeepAr();
+    //                 },
+    //                 child:
+    //                     const Text("Click here to update permission status")),
+    //           ],
+    //         ),
+    //       );
   }
 
   Future<void> _initializeDeepAr() async {
@@ -161,7 +183,7 @@ class _HomeState extends State<Home> {
                 },
                 iconSize: 50,
                 color: Colors.white70,
-                icon: Icon(isRecording
+                icon: Icon(_isRecording
                     ? Icons.videocam_sharp
                     : Icons.videocam_outlined)),
             const SizedBox(width: 20),
@@ -190,8 +212,7 @@ class _HomeState extends State<Home> {
 
   /// Add effects which are rendered via DeepAR sdk
   void _initEffects() {
-
-    // Either get all effects 
+    // Either get all effects
     _getEffectsFromAssets(context).then((values) {
       _effectsList.clear();
       _effectsList.addAll(values);

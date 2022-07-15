@@ -15,8 +15,8 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin{
     }
     
     var registrar: FlutterPluginRegistrar? = nil
-
-
+    
+    
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         
@@ -24,37 +24,14 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin{
         
         switch call.method {
         case "check_all_permission":
-            let isGranted:Bool = checkCameraPermission()
-            result(isGranted)
+            result(isMediaPermissionGranted())
         default:
             result("Failed to call iOS platform method")
         }
     }
     
-    private func checkCameraPermission() -> Bool{
-        var isGranted:Bool = false
-        switch AVCaptureDevice.authorizationStatus(for: .video){
-            
-        case .notDetermined:
-            // Request Permission
-            AVCaptureDevice.requestAccess(for: .video) { granted in
-                guard granted else {
-                    return
-                }
-                
-                isGranted = true
-            }
-        case .restricted:
-            break
-        case .denied:
-            break
-        case .authorized:
-            isGranted = true
-        @unknown default:
-            break
-        }
-        
-        return isGranted
+    private func isMediaPermissionGranted() -> Bool{
+        return (AVCaptureDevice.authorizationStatus(for: .video) ==  .authorized) && (AVCaptureDevice.authorizationStatus(for: .audio) ==  .authorized)
     }
-       
+    
 }

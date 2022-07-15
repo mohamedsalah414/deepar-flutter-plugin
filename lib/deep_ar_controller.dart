@@ -30,7 +30,8 @@ class DeepArController {
     _iosLicenseKey = iosLicenseKey;
     resolution = preset;
     isPermission = await _deepArPlatformHandler.checkAllPermission() ?? false;
-    if (!isPermission) return;
+    print("PERMISSSION : $isPermission");
+    //if (!isPermission) return;
 
     if (Platform.isAndroid) {
       assert(androidLicenseKey != null, "androidLicenseKey missing");
@@ -96,12 +97,16 @@ class DeepArController {
       await file.create();
       _deepArPlatformHandler.startRecordingVideo(filePath: file.path);
     } else {
-      _deepArPlatformHandler.startRecordingVideo();
+      _deepArPlatformHandler.startRecordingVideoIos(textureId!);
     }
   }
 
   void stopVideoRecording() {
-    _deepArPlatformHandler.stopRecordingVideo();
+    if (Platform.isAndroid) {
+      _deepArPlatformHandler.stopRecordingVideo();
+    } else {
+      _deepArPlatformHandler.stopRecordingVideoIos(textureId!);
+    }
   }
 
   void flipCamera() {

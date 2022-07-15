@@ -58,6 +58,16 @@ class DeepArPlatformHandler {
     await _channel.invokeMethod(PlatformStrings.stopRecordingVideo);
   }
 
+  Future<void> startRecordingVideoIos(int view) async {
+    await _avCameraChannel(view)
+        .invokeMethod<String>(PlatformStrings.startRecordingVideo);
+  }
+
+  Future<void> stopRecordingVideoIos(int view) async {
+    await _avCameraChannel(view)
+        .invokeMethod<String>(PlatformStrings.stopRecordingVideo);
+  }
+
   Future<bool?> checkAllPermission() async {
     return await _channel
         .invokeMethod<bool?>(PlatformStrings.checkAllPermission);
