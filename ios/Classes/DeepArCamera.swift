@@ -140,6 +140,8 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         
         self.arView = self.deepAR.createARView(withFrame: self.frame) as? ARView
         cameraController.startCamera()
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(orientationDidChange), name: UIDevice.orientationDidChangeNotification, object: nil)
     }
     func startRecordingVideo(){
         let width: Int32 = Int32(deepAR.renderingResolution.width)
@@ -205,5 +207,26 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         case .veryHigh:
             return CGSize(width: 1920, height: 1080);
         }
+    }
+    
+    @objc
+    private func orientationDidChange() {
+        guard let orientation = UIApplication.shared.windows.first?.windowScene?.interfaceOrientation else { return }
+        switch orientation {
+        case .landscapeLeft:
+            cameraController.videoOrientation = .landscapeLeft
+            break
+        case .landscapeRight:
+            cameraController.videoOrientation = .landscapeRight
+            break
+        case .portrait:
+            cameraController.videoOrientation = .portrait
+            break
+        case .portraitUpsideDown:
+            cameraController.videoOrientation = .portraitUpsideDown
+        default:
+            break
+        }
+        
     }
 }
