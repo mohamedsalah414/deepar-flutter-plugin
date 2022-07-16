@@ -45,10 +45,10 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   late final DeepArController _controller;
   String version = '';
-  bool _isRecording = false;
+
   final List<String> _effectsList = [];
   int _effectIndex = 0;
-  bool isFlashOn = false;
+
   final String _assetEffectsPath = 'assets/effects/';
 
   @override
@@ -86,14 +86,14 @@ class _HomeState extends State<Home> {
             right: 10,
             child: IconButton(
                 onPressed: () async {
-                  bool status = await _controller.toggleFlash();
-                  setState(() {
-                    isFlashOn = status;
-                  });
+                  await _controller.toggleFlash();
+                  setState(() {});
                 },
                 color: Colors.white70,
                 iconSize: 40,
-                icon: Icon(isFlashOn ? Icons.flash_on : Icons.flash_off))),
+                icon: Icon(_controller.flashState
+                    ? Icons.flash_on
+                    : Icons.flash_off))),
         Positioned(
           top: 10,
           left: 10,
@@ -174,19 +174,17 @@ class _HomeState extends State<Home> {
                 )),
             IconButton(
                 onPressed: () {
-                  if (_isRecording) {
+                  if (_controller.isRecording) {
                     _controller.stopVideoRecording();
-                    _isRecording = false;
                   } else {
                     _controller.startVideoRecording();
-                    _isRecording = true;
                   }
 
                   setState(() {});
                 },
                 iconSize: 50,
                 color: Colors.white70,
-                icon: Icon(_isRecording
+                icon: Icon(_controller.isRecording
                     ? Icons.videocam_sharp
                     : Icons.videocam_outlined)),
             const SizedBox(width: 20),

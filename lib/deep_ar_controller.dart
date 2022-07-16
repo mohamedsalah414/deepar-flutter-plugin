@@ -20,6 +20,7 @@ class DeepArController {
   double? _aspectRatio;
   bool _hasPermission = false;
   String? _iosLicenseKey;
+  bool _isRecording = false;
 
   CameraDirection _cameraDirection = CameraDirection.front;
   bool _flashState = false;
@@ -36,6 +37,9 @@ class DeepArController {
   ///
   ///For [iOS], please call the function after [DeepArPreview] widget has been built.
   double get aspectRatio => _aspectRatio ?? 1.0;
+
+  ///Return true if the recording is in progress.
+  bool get isRecording => _isRecording;
 
   ///Size of the preview image
   ///
@@ -142,6 +146,7 @@ class DeepArController {
   }
 
   Future<void> startVideoRecording() async {
+    if (_isRecording) throw ("Recording already in progress");
     if (Platform.isAndroid) {
       Directory dir = Directory('/storage/emulated/0/Download');
       var r = Random();
@@ -152,17 +157,23 @@ class DeepArController {
           List.generate(5, (index) => _chars[r.nextInt(_chars.length)]).join();
       final File file = File('${dir.path}/$fileName.mp4');
       await file.create();
-      _deepArPlatformHandler.startRecordingVideoAndroid(filePath: file.path);
+      await _deepArPlatformHandler.startRecordingVideoAndroid(
+          filePath: file.path);
+      _isRecording = true;
     } else {
       _deepArPlatformHandler.startRecordingVideoIos(_textureId!);
     }
   }
 
-  Future<File?> stopVideoRecording() {
-    return platformRun(
+  Future<File?> stopVideoRecording() async {
+    if (!_isRecording)
+      throw ("Invalid stopVideoRecording trigger. No recording was in progress");
+    final _file = await platformRun(
         androidFunction: _deepArPlatformHandler.stopRecordingVideoAndroid,
         iOSFunction: () =>
             _deepArPlatformHandler.stopRecordingVideoIos(_textureId!));
+    _isRecording = false;
+    return _file;
   }
 
   ///Flips Camera and return the current direction
