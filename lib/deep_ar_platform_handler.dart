@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:deep_ar/platform_strings.dart';
 import 'package:deep_ar/resolution_preset.dart';
@@ -15,7 +14,7 @@ class DeepArPlatformHandler {
   static const MethodChannel _cameraXChannel =
       MethodChannel(PlatformStrings.cameraXChannel);
   MethodChannel _avCameraChannel(int view) =>
-      MethodChannel(PlatformStrings.avCameraChannel);
+      MethodChannel(PlatformStrings.avCameraChannel + "/$view");
 
   static Future<String?> get platformVersion async {
     final String? version = await _channel.invokeMethod('getPlatformVersion');
@@ -35,26 +34,26 @@ class DeepArPlatformHandler {
     return texturedId;
   }
 
-  Future<String?> switchEffect(String effect, int view) {
-    if (Platform.isAndroid) {
-      return _channel.invokeMethod<String>(PlatformStrings.switchEffect, {
-        PlatformStrings.effect: effect,
-      });
-    } else {
-      return _avCameraChannel(view)
-          .invokeMethod<String>(PlatformStrings.switchEffect, {
-        PlatformStrings.effect: effect,
-      });
-    }
+  Future<String?> switchEffectAndroid(String effect) {
+    return _channel.invokeMethod<String>(PlatformStrings.switchEffect, {
+      PlatformStrings.effect: effect,
+    });
   }
 
-  Future<void> startRecordingVideo({String? filePath}) async {
+  Future<String?> switchCameraIos(String effect, int view) {
+    return _avCameraChannel(view)
+        .invokeMethod<String>(PlatformStrings.switchEffect, {
+      PlatformStrings.effect: effect,
+    });
+  }
+
+  Future<void> startRecordingVideoAndroid({String? filePath}) async {
     await _channel.invokeMethod(PlatformStrings.startRecordingVideo, {
       'file_path': filePath,
     });
   }
 
-  Future<void> stopRecordingVideo() async {
+  Future<File?> stopRecordingVideoAndroid() async {
     await _channel.invokeMethod(PlatformStrings.stopRecordingVideo);
   }
 
@@ -63,7 +62,7 @@ class DeepArPlatformHandler {
         .invokeMethod<String>(PlatformStrings.startRecordingVideo);
   }
 
-  Future<void> stopRecordingVideoIos(int view) async {
+  Future<File?> stopRecordingVideoIos(int view) async {
     await _avCameraChannel(view)
         .invokeMethod<String>(PlatformStrings.stopRecordingVideo);
   }
@@ -73,41 +72,34 @@ class DeepArPlatformHandler {
         .invokeMethod<bool?>(PlatformStrings.checkAllPermission);
   }
 
-  Future<String?> checkVersion() async {
-    return await _channel.invokeMethod<String?>(PlatformStrings.checkVersion);
-  }
-
-  Future<Size?> getResolutionDimensions(int view) async {
-    final result = await _avCameraChannel(view)
+  Future<String?> getResolutionDimensions(int view) async {
+    final dimensions = await _avCameraChannel(view)
         .invokeMethod<String?>(PlatformStrings.getResolution);
-    if (result != null) {
-      double width = double.parse(result.split(" ")[0]);
-      double height = double.parse(result.split(" ")[1]);
-      return Size(width, height);
-    }
+    return dimensions;
   }
 
-  Future<void> flipCamera() async {
-    await _cameraXChannel.invokeMethod("flip_camera");
+  Future<bool?> flipCamera() {
+    return _cameraXChannel.invokeMethod<bool>("flip_camera");
   }
 
-  Future<void> flipCameraIos(int view) async {
-    await _avCameraChannel(view).invokeMethod<String>("flip_camera");
+  Future<bool?> flipCameraIos(int view) {
+    return _avCameraChannel(view).invokeMethod<bool>("flip_camera");
   }
 
-  Future<void> takeScreenShot() async {
+  Future<File?> takeScreenShot() async {
     await _cameraXChannel.invokeMethod("take_screenshot");
   }
 
-  Future<void> takeScreenShotIos(int view) async {
+  Future<File?> takeScreenShotIos(int view) async {
     await _avCameraChannel(view).invokeMethod<String>("take_screenshot");
   }
 
   Future<bool> toggleFlash() async {
-   return await _cameraXChannel.invokeMethod<bool>("toggle_flash") ?? false;
+    return await _cameraXChannel.invokeMethod<bool>("toggle_flash") ?? false;
   }
 
   Future<bool> toggleFlashIos(int view) async {
-    return await _avCameraChannel(view).invokeMethod<bool>("toggle_flash") ?? false;
+    return await _avCameraChannel(view).invokeMethod<bool>("toggle_flash") ??
+        false;
   }
 }

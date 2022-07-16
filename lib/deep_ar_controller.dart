@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:deep_ar/deep_ar_platform_handler.dart';
 import 'package:deep_ar/platform_strings.dart';
 import 'package:deep_ar/resolution_preset.dart';
+import 'package:deep_ar/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -11,69 +12,118 @@ import 'package:permission_handler/permission_handler.dart';
 class DeepArController {
   DeepArController() : super();
   final DeepArPlatformHandler _deepArPlatformHandler = DeepArPlatformHandler();
-  int? textureId;
-  Size? size;
-  double? height;
-  double? width;
-  double _aspectRatio = 1.0;
-  late Resolution resolution;
 
-  bool get isInitialized => textureId != null;
-  bool isPermission = false;
-  double get aspectRatio => _aspectRatio;
+  late final Resolution _resolution;
+
+  int? _textureId;
+  Size? _imageSize;
+  double? _aspectRatio;
+  bool _hasPermission = false;
   String? _iosLicenseKey;
-  Future<void> initialize(
-      {String? androidLicenseKey,
-      String? iosLicenseKey,
-      required Resolution preset}) async {
+
+  CameraDirection _cameraDirection = CameraDirection.front;
+  bool _flashState = false;
+
+  ///Return true if the camera preview is intialized
+  ///
+  ///For [iOS], please call the function after [DeepArPreview] widget has been built.
+  bool get isInitialized => _textureId != null;
+
+  ///If the user has allowed required camera permissions
+  bool get hasPermisssion => _hasPermission;
+
+  ///Aspect ratio of the preivew image
+  ///
+  ///For [iOS], please call the function after [DeepArPreview] widget has been built.
+  double get aspectRatio => _aspectRatio ?? 1.0;
+
+  ///Size of the preview image
+  ///
+  ///For [iOS], please call the function after [DeepArPreview] widget has been built.
+  Size get imageDimensions {
+    assert(isInitialized, "DeepArController isn't initialized yet");
+    return _imageSize!;
+  }
+
+  ///Get current  camera direction as [CameraDirection.front] or [CameraDirection.rear]
+  CameraDirection get cameraDirection => _cameraDirection;
+
+  ///Get current flash state as [FlashState.on] or [FlashState.off]
+  bool get flashState => _flashState;
+
+  ///Initializes the DeepAR SDK with license keys and asks for required camera and microphone permissions.
+  ///Returns false if fails to initalize;
+  ///
+  ///[androidLicenseKey] and [iosLicenseKey] both cannot be null together.
+  ///
+  ///Recommended resolution: [Resolution.high] for optimum quality without performance tradeoffs
+  Future<bool> initialize({
+    required String? androidLicenseKey,
+    required String? iosLicenseKey,
+    Resolution resolution = Resolution.high,
+  }) async {
     assert(androidLicenseKey != null || iosLicenseKey != null,
         "Both android and iOS license keys cannot be null");
 
     _iosLicenseKey = iosLicenseKey;
-    resolution = preset;
-    isPermission = await _deepArPlatformHandler.checkAllPermission() ?? false;
-    print("PERMISSSION : $isPermission");
-    //if (!isPermission) return;
+    _resolution = resolution;
+    _hasPermission = await _askMediaPermission();
+
+    if (!_hasPermission) return false;
 
     if (Platform.isAndroid) {
       assert(androidLicenseKey != null, "androidLicenseKey missing");
-      String? dimensions =
-          await _deepArPlatformHandler.initialize(androidLicenseKey!, preset);
+      String? dimensions = await _deepArPlatformHandler.initialize(
+          androidLicenseKey!, resolution);
       if (dimensions != null) {
-        double width = double.parse(dimensions.split(" ")[0]);
-        double height = double.parse(dimensions.split(" ")[1]);
-        _aspectRatio = width / height;
-        textureId = await _deepArPlatformHandler.startCameraAndroid();
+        _imageSize = sizeFromEncodedString(dimensions);
+        _aspectRatio = _imageSize!.width / _imageSize!.height;
+        _textureId = await _deepArPlatformHandler.startCameraAndroid();
+        return true;
       }
     } else if (Platform.isIOS) {
       assert(iosLicenseKey != null, "iosLicenseKey missing");
-      //TODO: Try to predict size before intialization
-      size = const Size(500, 500);
-      _aspectRatio = size!.width / size!.height;
-      textureId = -1;
+      _imageSize = iOSImageSizeFromResolution(resolution);
+      _aspectRatio = _imageSize!.width / _imageSize!.height;
+      _textureId = -1;
+      return true;
     } else {
       throw ("Platform not supported");
     }
+    return false;
   }
 
-  Widget buildPreview({Function()? oniOSViewCreated}) {
+  ///Builds and returns the DeepAR Camera Widget.
+  ///
+  ///[oniOSViewCreated] callback to update [imageDimensions] and [aspectRatio] after iOS
+  ///widget is built
+  ///
+  ///Not recommneded to use directly. Please use the wrapper [DeepArPreview] instead.
+  ///
+  ///Android layer uses FlutterTexture while iOS uses NativeViews.
+  ///See: https://api.flutter.dev/flutter/widgets/Texture-class.html
+  ///https://docs.flutter.dev/development/platform-integration/ios/platform-views
+  Widget buildPreview({Function? oniOSViewCreated}) {
     if (Platform.isAndroid) {
-      return Texture(textureId: textureId!);
+      return Texture(textureId: _textureId!);
     } else if (Platform.isIOS) {
       return UiKitView(
           viewType: "deep_ar_view",
           layoutDirection: TextDirection.ltr,
           creationParams: <String, dynamic>{
             PlatformStrings.licenseKey: _iosLicenseKey,
-            PlatformStrings.resolution: resolution.stringValue
+            PlatformStrings.resolution: _resolution.stringValue
           },
           creationParamsCodec: const StandardMessageCodec(),
           onPlatformViewCreated: ((id) {
-            textureId = id;
+            _textureId = id;
             _deepArPlatformHandler
-                .getResolutionDimensions(textureId!)
+                .getResolutionDimensions(_textureId!)
                 .then((value) {
-              _aspectRatio = value!.width / value.height;
+              if (value != null) {
+                _imageSize = sizeFromEncodedString(value);
+                _aspectRatio = _imageSize!.width / _imageSize!.height;
+              }
               oniOSViewCreated?.call();
             });
           }));
@@ -82,8 +132,13 @@ class DeepArController {
     }
   }
 
+  ///Switch DeepAR with the passed [effect] path fromfresol assets
   Future<String?> switchEffect(String effect) {
-    return _deepArPlatformHandler.switchEffect(effect, textureId!);
+    return platformRun(
+        androidFunction: () =>
+            _deepArPlatformHandler.switchEffectAndroid(effect),
+        iOSFunction: () =>
+            _deepArPlatformHandler.switchCameraIos(effect, _textureId!));
   }
 
   Future<void> startVideoRecording() async {
@@ -97,46 +152,48 @@ class DeepArController {
           List.generate(5, (index) => _chars[r.nextInt(_chars.length)]).join();
       final File file = File('${dir.path}/$fileName.mp4');
       await file.create();
-      _deepArPlatformHandler.startRecordingVideo(filePath: file.path);
+      _deepArPlatformHandler.startRecordingVideoAndroid(filePath: file.path);
     } else {
-      _deepArPlatformHandler.startRecordingVideoIos(textureId!);
+      _deepArPlatformHandler.startRecordingVideoIos(_textureId!);
     }
   }
 
-  void stopVideoRecording() {
-    if (Platform.isAndroid) {
-      _deepArPlatformHandler.stopRecordingVideo();
-    } else {
-      _deepArPlatformHandler.stopRecordingVideoIos(textureId!);
-    }
+  Future<File?> stopVideoRecording() {
+    return platformRun(
+        androidFunction: _deepArPlatformHandler.stopRecordingVideoAndroid,
+        iOSFunction: () =>
+            _deepArPlatformHandler.stopRecordingVideoIos(_textureId!));
   }
 
-  void flipCamera() {
-    if (Platform.isAndroid) {
-      _deepArPlatformHandler.flipCamera();
-    } else {
-      _deepArPlatformHandler.flipCameraIos(textureId!);
+  ///Flips Camera and return the current direction
+  Future<CameraDirection> flipCamera() async {
+    final result = await platformRun(
+        androidFunction: _deepArPlatformHandler.flipCamera,
+        iOSFunction: () => _deepArPlatformHandler.flipCameraIos(_textureId!));
+    if (result != null && result) {
+      _cameraDirection = _cameraDirection == CameraDirection.front
+          ? CameraDirection.rear
+          : CameraDirection.front;
+      if (_cameraDirection == CameraDirection.front) _flashState = false;
     }
+    return _cameraDirection;
   }
 
-  void takeScreenshot() {
-    if (Platform.isAndroid) {
-      _deepArPlatformHandler.takeScreenShot();
-    } else {
-      _deepArPlatformHandler.takeScreenShotIos(textureId!);
-    }
+  ///Takes picture of the current frame and returns a [File]
+  Future<File?> takeScreenshot() {
+    return platformRun(
+        androidFunction: _deepArPlatformHandler.takeScreenShot,
+        iOSFunction: () =>
+            _deepArPlatformHandler.takeScreenShotIos(_textureId!));
   }
 
-  Future<bool> toggleFlash() {
-    if (Platform.isAndroid) {
-      return _deepArPlatformHandler.toggleFlash();
-    } else {
-      return _deepArPlatformHandler.toggleFlashIos(textureId!);
-    }
-  }
-
-  Future<String?> checkVersion() {
-    return _deepArPlatformHandler.checkVersion();
+  ///Returns true if toggle was success
+  Future<bool> toggleFlash() async {
+    bool result = await platformRun(
+        androidFunction: _deepArPlatformHandler.toggleFlash,
+        iOSFunction: () => _deepArPlatformHandler.toggleFlashIos(_textureId!));
+    _flashState = result;
+    return _flashState;
   }
 
   Size toSize(Map<dynamic, dynamic> data) {
@@ -145,8 +202,8 @@ class DeepArController {
     return Size(width, height);
   }
 
-  Future<bool> askMediaPermission() async {
-    Map<Permission, PermissionStatus> statuses = await [
+  Future<bool> _askMediaPermission() async {
+    await [
       Permission.camera,
       Permission.microphone,
       Permission.photos,

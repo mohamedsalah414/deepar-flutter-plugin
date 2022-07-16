@@ -1,11 +1,8 @@
 import 'dart:io';
 
-import 'package:deep_ar/deep_ar_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:deep_ar/deep_ar.dart';
 import 'dart:convert';
-
-import 'package:deep_ar/resolution_preset.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,20 +44,25 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   late final DeepArController _controller;
-  bool isFlashOn = false;
   String version = '';
   bool _isRecording = false;
   final List<String> _effectsList = [];
   int _effectIndex = 0;
-
+  bool isFlashOn = false;
   final String _assetEffectsPath = 'assets/effects/';
 
   @override
   void initState() {
     _controller = DeepArController();
-
-    _initializeDeepAr();
-    _askPermission();
+    _controller
+        .initialize(
+          androidLicenseKey:
+              "53de9b68021fd5be051ddd80c8d1aee5653eda7cabcd58776c1a96e5027f4a8c78d4946795ccd944",
+          iosLicenseKey:
+              "38c170bb360fff2913731fdb0bb17a6257d85e6240d53aeb53a997886698ab4cb13a8b90736684ae",
+          resolution: Resolution.high,
+        )
+        .then((value) => setState(() {}));
     super.initState();
   }
 
@@ -146,22 +148,6 @@ class _HomeState extends State<Home> {
     //           ],
     //         ),
     //       );
-  }
-
-  Future<void> _initializeDeepAr() async {
-    await _controller
-        .initialize(
-          androidLicenseKey:
-              "53de9b68021fd5be051ddd80c8d1aee5653eda7cabcd58776c1a96e5027f4a8c78d4946795ccd944",
-          iosLicenseKey:
-              "38c170bb360fff2913731fdb0bb17a6257d85e6240d53aeb53a997886698ab4cb13a8b90736684ae",
-          preset: Resolution.high,
-        )
-        .then((value) => setState(() {}));
-  }
-
-  void _askPermission() {
-    _controller.askMediaPermission().then((value) => setState(() {}));
   }
 
   /// Sample option which can be performed

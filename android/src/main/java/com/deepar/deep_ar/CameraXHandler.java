@@ -62,6 +62,7 @@ public class CameraXHandler implements MethodChannel.MethodCallHandler {
                 break;
             case "flip_camera":
                 flipCamera();
+                result.success(true);
                 break;
             case "take_screenshot":
                 deepAR.takeScreenshot();

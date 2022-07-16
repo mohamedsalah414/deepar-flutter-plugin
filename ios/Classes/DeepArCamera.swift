@@ -78,7 +78,7 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
             self.pictureQuality = PictureQuality.init(rawValue: dict["resolution"] as? String ?? "medium")
         }
         print("2");
-        channel = FlutterMethodChannel(name: "deep_ar/view", binaryMessenger: messenger!);
+        channel = FlutterMethodChannel(name: "deep_ar/view/" + String(viewId), binaryMessenger: messenger!);
         channel.setMethodCallHandler(methodHandler);
         print("3");
         createNativeView()
@@ -113,6 +113,7 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
             result("Screenshot called");
         case "flip_camera":
             cameraController.position = cameraController.position == .back ? .front : .back
+            result(true);
         case "toggle_flash":
             let isFlash:Bool = toggleFlash()
             result(isFlash);
