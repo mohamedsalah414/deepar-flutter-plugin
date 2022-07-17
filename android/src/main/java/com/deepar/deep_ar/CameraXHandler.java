@@ -107,8 +107,6 @@ public class CameraXHandler implements MethodChannel.MethodCallHandler {
         startNative(null);
     }
 
-    int numberOfTimes = 0;
-
     private void startNative(MethodChannel.Result result) {
         future = ProcessCameraProvider.getInstance(activity);
         Executor executor = ContextCompat.getMainExecutor(activity);
@@ -162,8 +160,6 @@ public class CameraXHandler implements MethodChannel.MethodCallHandler {
                             if (deepAR != null) {
 
                                 try {
-                                    numberOfTimes++;
-                                    Log.d("", "NUMBER_TIMES " + numberOfTimes);
                                     long startTime = System.nanoTime();
                                     deepAR.receiveFrame(buffers[currentBuffer],
                                             image.getWidth(), image.getHeight(),
@@ -172,10 +168,9 @@ public class CameraXHandler implements MethodChannel.MethodCallHandler {
                                             DeepARImageFormat.YUV_420_888,
                                             image.getPlanes()[1].getPixelStride()
                                     );
-                                    Log.e("Measure", "TASK took_ : " + numberOfTimes + " => " + ((System.nanoTime() - startTime) / 1000000) + "mS\n");
                                 } catch (Exception e) {
                                     e.printStackTrace();
-                                    Log.e("ERRRR", "" + e);
+                                    Log.e("Error", "" + e);
                                 }
 
                             }
