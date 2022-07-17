@@ -162,6 +162,7 @@ class DeepArController {
       _isRecording = true;
     } else {
       _deepArPlatformHandler.startRecordingVideoIos(_textureId!);
+      _isRecording = true;
     }
   }
 
