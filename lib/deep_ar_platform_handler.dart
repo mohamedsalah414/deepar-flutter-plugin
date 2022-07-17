@@ -1,12 +1,9 @@
 import 'dart:io';
 
+import 'package:deep_ar/deep_ar_controller.dart';
 import 'package:deep_ar/platform_strings.dart';
 import 'package:deep_ar/resolution_preset.dart';
 import 'package:flutter/services.dart';
-
-class DeepArCodec extends StandardMessageCodec {
-  const DeepArCodec();
-}
 
 class DeepArPlatformHandler {
   static const MethodChannel _channel =
@@ -15,6 +12,31 @@ class DeepArPlatformHandler {
       MethodChannel(PlatformStrings.cameraXChannel);
   MethodChannel _avCameraChannel(int view) =>
       MethodChannel(PlatformStrings.avCameraChannel + "/$view");
+
+  late final void Function(DeepArNativeResponse response,
+      {String? message, dynamic data}) onNativeResponse;
+
+  DeepArPlatformHandler(this.onNativeResponse) {
+    _channel.setMethodCallHandler(listenFromNativeMethodHandler);
+  }
+
+  Future<void> listenFromNativeMethodHandler(MethodCall call) async {
+    switch (call.method) {
+      case "on_video_result":
+        Map<dynamic, dynamic> data = call.arguments;
+        //bool status = data['status'] ?? false;
+
+        String caller = data['caller'];
+        String? filePath = data['file_path'];
+        String message = data['message'] ?? "";
+        
+        DeepArNativeResponse response = DeepArNativeResponse.values.byName(caller);
+        onNativeResponse(response, message: message, data: filePath);
+        break;
+      default:
+        print('no method handler for method ${call.method}');
+    }
+  }
 
   static Future<String?> get platformVersion async {
     final String? version = await _channel.invokeMethod('getPlatformVersion');
@@ -47,10 +69,8 @@ class DeepArPlatformHandler {
     });
   }
 
-  Future<void> startRecordingVideoAndroid({String? filePath}) async {
-    await _channel.invokeMethod(PlatformStrings.startRecordingVideo, {
-      'file_path': filePath,
-    });
+  Future<void> startRecordingVideoAndroid() async {
+    await _channel.invokeMethod(PlatformStrings.startRecordingVideo);
   }
 
   Future<File?> stopRecordingVideoAndroid() async {

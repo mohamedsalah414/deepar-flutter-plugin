@@ -12,6 +12,7 @@ import android.graphics.SurfaceTexture;
 import android.media.Image;
 import android.media.MediaScannerConnection;
 import android.os.Environment;
+import android.os.Handler;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Surface;
@@ -19,7 +20,9 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -58,8 +61,15 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
     private DeepArEffects deepArEffects;
     private FlutterPluginBinding flutterPlugin;
     private SurfaceTexture tempSurfaceTexture;
+    private String videoFilePath;
 
     private CameraResolutionPreset resolutionPreset;
+
+    private enum DeepArResponse {
+        videoStarted,
+        videoCompleted,
+        videoError
+    }
 
 
     @Override
@@ -137,8 +147,17 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                 break;
 
             case MethodStrings.startRecordingVideo:
-                String filePath = ((String) arguments.get("file_path")).toString();
-                deepAR.startVideoRecording(filePath);
+
+                try {
+                    File file = File.createTempFile("deep_ar_", ".mp4");
+                    videoFilePath = file.getPath();
+                    deepAR.startVideoRecording(videoFilePath);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Log.e("DeepAR", "Error : Unable to create file");
+                    videoResult(DeepArResponse.videoError, "Exception while creating file");
+                }
+
                 break;
 
             case MethodStrings.stopRecordingVideo:
@@ -231,17 +250,20 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
 
     @Override
     public void videoRecordingStarted() {
-
+        Log.d(TAG, "videoRecordingStarted: "+videoFilePath);
+        videoResult(DeepArResponse.videoStarted, "video success");
     }
 
     @Override
     public void videoRecordingFinished() {
-
+        Log.d(TAG, "videoRecordingFinished: "+videoFilePath);
+        videoResult(DeepArResponse.videoCompleted, "video success");
     }
 
     @Override
     public void videoRecordingFailed() {
-
+        Log.d(TAG, "videoRecordingFailed: "+videoFilePath);
+        videoResult(DeepArResponse.videoError, "video failed");
     }
 
     @Override
@@ -287,6 +309,17 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
     public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         Log.d(TAG, "onRequestPermissionsResult: "+requestCode);
         return false;
+    }
+
+    private void videoResult(DeepArResponse callerResponse, String message){
+        Map<String, Object> map= new HashMap<String, Object>();
+        map.put("caller", callerResponse.name());
+        map.put("message", message);
+        if (callerResponse == DeepArResponse.videoCompleted){
+            map.put("file_path", videoFilePath);
+            videoFilePath = "";
+        }
+        channel.invokeMethod("on_video_result", map);
     }
 
     private String extractFileName(String fullPathFile){
