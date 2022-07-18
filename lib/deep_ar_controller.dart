@@ -8,8 +8,6 @@ import 'package:flutter/services.dart';
 
 import 'package:permission_handler/permission_handler.dart';
 
-enum DeepArNativeResponse { videoStarted, videoCompleted, videoError }
-
 class DeepArController {
   late final DeepArPlatformHandler _deepArPlatformHandler;
   late final Resolution _resolution;
@@ -165,7 +163,7 @@ class DeepArController {
             _deepArPlatformHandler.switchFaceMaskIos(mask, _textureId!));
   }
 
-///Switch DeepAR with the passed [filter] path fromfresol assets
+  ///Switch DeepAR with the passed [filter] path fromfresol assets
   Future<String?> switchFilter(String? filter) {
     return platformRun(
         androidFunction: () =>
@@ -185,16 +183,18 @@ class DeepArController {
     }
   }
 
-  Future<File?> stopVideoRecording() async {
-    if (!_isRecording)
+  Future<File> stopVideoRecording() async {
+    if (!_isRecording) {
       throw ("Invalid stopVideoRecording trigger. No recording was in progress");
+    }
     final _file = await platformRun(
         androidFunction: _deepArPlatformHandler.stopRecordingVideoAndroid,
         iOSFunction: () =>
             _deepArPlatformHandler.stopRecordingVideoIos(_textureId!));
     _isRecording = false;
-    print("file_path_ ${_file?.path}");
-    return _file;
+    if (_file == "ENDED_WITH_ERROR") throw ("Video capture failed");
+
+    return File(_file!);
   }
 
   ///Flips Camera and return the current direction
@@ -212,11 +212,14 @@ class DeepArController {
   }
 
   ///Takes picture of the current frame and returns a [File]
-  Future<File?> takeScreenshot() {
-    return platformRun(
+  Future<File> takeScreenshot() async {
+    final _file = await platformRun(
         androidFunction: _deepArPlatformHandler.takeScreenShot,
         iOSFunction: () =>
             _deepArPlatformHandler.takeScreenShotIos(_textureId!));
+    if (_file == "ENDED_WITH_ERROR") throw ("Video capture failed");
+
+    return File(_file!);
   }
 
   ///Returns true if toggle was success

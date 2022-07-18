@@ -62,13 +62,15 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
     private FlutterPluginBinding flutterPlugin;
     private SurfaceTexture tempSurfaceTexture;
     private String videoFilePath;
+    private String screenshotPath;
 
     private CameraResolutionPreset resolutionPreset;
 
     private enum DeepArResponse {
         videoStarted,
         videoCompleted,
-        videoError
+        videoError,
+        screenshotTaken
     }
 
 
@@ -147,21 +149,27 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                 break;
 
             case MethodStrings.startRecordingVideo:
-
                 try {
                     File file = File.createTempFile("deep_ar_", ".mp4");
                     videoFilePath = file.getPath();
                     deepAR.startVideoRecording(videoFilePath);
+                
                 } catch (Exception e) {
                     e.printStackTrace();
                     Log.e("DeepAR", "Error : Unable to create file");
                     videoResult(DeepArResponse.videoError, "Exception while creating file");
                 }
+                result.success("STARTING_TO_RECORD");
 
                 break;
 
             case MethodStrings.stopRecordingVideo:
                 deepAR.stopVideoRecording();
+               result.success("STOPPING_RECORDING");
+                break;
+            case "take_screenshot":
+                deepAR.takeScreenshot();
+                result.success("SCREENSHOT_TRIGGERED");
                 break;
 
             case "switch_face_mask":
@@ -262,7 +270,8 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
             outputStream.flush();
             outputStream.close();
             MediaScannerConnection.scanFile(activity, new String[]{imageFile.toString()}, null, null);
-            Toast.makeText(activity, "Screenshot " + imageFile.getName() + " saved.", Toast.LENGTH_SHORT).show();
+            screenshotPath = imageFile.getPath();
+            screenshotResult(DeepArResponse.screenshotTaken, "screenshot taken");
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -340,6 +349,16 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
             videoFilePath = "";
         }
         channel.invokeMethod("on_video_result", map);
+    }
+    private void screenshotResult(DeepArResponse callerResponse, String message){
+        Map<String, Object> map= new HashMap<String, Object>();
+        map.put("caller", callerResponse.name());
+        map.put("message", message);
+        if (callerResponse == DeepArResponse.screenshotTaken){
+            map.put("file_path", screenshotPath);
+            screenshotPath = "";
+        }
+        channel.invokeMethod("on_screenshot_result", map);
     }
 
     private String extractFileName(String fullPathFile){

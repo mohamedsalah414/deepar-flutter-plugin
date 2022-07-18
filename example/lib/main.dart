@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:deep_ar/deep_ar.dart';
 import 'dart:convert';
 
+import 'package:open_file/open_file.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
@@ -196,15 +198,16 @@ class _HomeState extends State<Home> {
                 onPressed: () async {
                   if (_controller.isRecording) {
                     File? file = await _controller.stopVideoRecording();
-                    Fluttertoast.showToast(
-                        msg: "Saved at ${file?.path}",
-                        toastLength: Toast.LENGTH_SHORT,
-                        gravity: ToastGravity.CENTER,
-                        backgroundColor: Colors.grey,
-                        textColor: Colors.white,
-                        fontSize: 16.0);
+                    OpenFile.open(file.path);
+                    // Fluttertoast.showToast(
+                    //     msg: "Saved at ${file?.path}",
+                    //     toastLength: Toast.LENGTH_SHORT,
+                    //     gravity: ToastGravity.CENTER,
+                    //     backgroundColor: Colors.grey,
+                    //     textColor: Colors.white,
+                    //     fontSize: 16.0);
                   } else {
-                    _controller.startVideoRecording();
+                    await _controller.startVideoRecording();
                   }
 
                   setState(() {});
@@ -217,7 +220,9 @@ class _HomeState extends State<Home> {
             const SizedBox(width: 20),
             IconButton(
                 onPressed: () {
-                  _controller.takeScreenshot();
+                  _controller.takeScreenshot().then((file) {
+                    OpenFile.open(file.path);
+                  });
                 },
                 color: Colors.white70,
                 iconSize: 40,

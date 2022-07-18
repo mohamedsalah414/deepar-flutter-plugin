@@ -6,6 +6,10 @@ import 'package:deep_ar/platform_strings.dart';
 import 'package:deep_ar/resolution_preset.dart';
 import 'package:flutter/services.dart';
 
+enum VideoResponse { videoStarted, videoCompleted, videoError }
+
+enum ScreenshotResponse { screenshotTaken }
+
 class DeepArPlatformHandler {
   static const MethodChannel _channel =
       MethodChannel(PlatformStrings.generalChannel);
@@ -13,11 +17,10 @@ class DeepArPlatformHandler {
       MethodChannel(PlatformStrings.cameraXChannel);
   MethodChannel _avCameraChannel(int view) =>
       MethodChannel(PlatformStrings.avCameraChannel + "/$view");
-
-  late final void Function(DeepArNativeResponse response,
-      {String? message, dynamic data}) onNativeResponse;
-
-  static String? _videoFilePath = "N/A";
+  static VideoResponse? _videoResponse;
+  static String? _videoFilePath;
+  static ScreenshotResponse? _screenshotResponse;
+  static String? _screenshotFilePath;
 
   DeepArPlatformHandler() {
     if (Platform.isAndroid) {
@@ -30,30 +33,31 @@ class DeepArPlatformHandler {
   }
 
   Future<void> listenFromNativeMethodHandler(MethodCall call) async {
+    Map<dynamic, dynamic> data = call.arguments;
+
+    String caller = data['caller'];
+    String? filePath = data['file_path'];
+    String _ = data['message'] ?? "";
     switch (call.method) {
       case "on_video_result":
-        Map<dynamic, dynamic> data = call.arguments;
-        //bool status = data['status'] ?? false;
+        _videoResponse = VideoResponse.values.byName(caller);
 
-        String caller = data['caller'];
-        String? filePath = data['file_path'];
-        String message = data['message'] ?? "";
-
-        // isSuccess or isFail
-
-        DeepArNativeResponse response =
-            DeepArNativeResponse.values.byName(caller);
-
-        print("WAITTT : $caller => $filePath");
-
-        if (response == DeepArNativeResponse.videoCompleted) {
+        if (_videoResponse == VideoResponse.videoCompleted) {
           _videoFilePath = filePath;
         } else {
           _videoFilePath = null;
         }
-        //isVideoResult = true;
 
-        //onNativeResponse(response, message: message, data: filePath);
+        break;
+      case "on_screenshot_result":
+        _screenshotResponse = ScreenshotResponse.values.byName(caller);
+
+        if (_screenshotResponse == ScreenshotResponse.screenshotTaken) {
+          _screenshotFilePath = filePath;
+        } else {
+          _screenshotFilePath = null;
+        }
+
         break;
       default:
         print('no method handler for method ${call.method}');
@@ -98,8 +102,7 @@ class DeepArPlatformHandler {
   }
 
   Future<String?> switchFaceMaskIos(String? mask, int view) {
-    return _avCameraChannel(view)
-        .invokeMethod<String>('switch_face_mask', {
+    return _avCameraChannel(view).invokeMethod<String>('switch_face_mask', {
       PlatformStrings.effect: mask,
     });
   }
@@ -111,8 +114,7 @@ class DeepArPlatformHandler {
   }
 
   Future<String?> switchFilterIos(String? mask, int view) {
-    return _avCameraChannel(view)
-        .invokeMethod<String>('switch_filter', {
+    return _avCameraChannel(view).invokeMethod<String>('switch_filter', {
       PlatformStrings.effect: mask,
     });
   }
@@ -121,12 +123,23 @@ class DeepArPlatformHandler {
     await _channel.invokeMethod(PlatformStrings.startRecordingVideo);
   }
 
-  Future<File?> stopRecordingVideoAndroid() async {
-    _channel.invokeMethod(PlatformStrings.stopRecordingVideo);
-
-    await Future.delayed(const Duration(seconds: 1));
-    print("file_path : $_videoFilePath");
-    return File(_videoFilePath!);
+  Future<String?> stopRecordingVideoAndroid() async {
+    await _channel.invokeMethod(PlatformStrings.stopRecordingVideo);
+    final Completer completer = Completer<String>();
+    Timer.periodic(const Duration(milliseconds: 200), (timer) {
+      if (_videoResponse == VideoResponse.videoCompleted) {
+        completer.complete(_videoFilePath);
+        _videoFilePath = null;
+        _videoResponse = null;
+        timer.cancel();
+      } else if (_videoResponse == VideoResponse.videoError) {
+        completer.complete("ENDED_WITH_ERROR");
+        _videoFilePath = null;
+        _videoResponse = null;
+        timer.cancel();
+      }
+    });
+    return completer.future.then((value) => value);
   }
 
   Future<void> startRecordingVideoIos(int view) async {
@@ -134,13 +147,24 @@ class DeepArPlatformHandler {
         .invokeMethod<String>(PlatformStrings.startRecordingVideo);
   }
 
-  Future<File?> stopRecordingVideoIos(int view) async {
-    _avCameraChannel(view)
+  Future<String?> stopRecordingVideoIos(int view) async {
+    await _avCameraChannel(view)
         .invokeMethod<String>(PlatformStrings.stopRecordingVideo);
-
-    await Future.delayed(const Duration(seconds: 1));
-    print("file_path : $_videoFilePath");
-    return File(_videoFilePath!);
+    final Completer completer = Completer<String>();
+    Timer.periodic(const Duration(milliseconds: 200), (timer) {
+      if (_videoResponse == VideoResponse.videoCompleted) {
+        completer.complete(_videoFilePath);
+        _videoFilePath = null;
+        _videoResponse = null;
+        timer.cancel();
+      } else if (_videoResponse == VideoResponse.videoError) {
+        completer.complete("ENDED_WITH_ERROR");
+        _videoFilePath = null;
+        _videoResponse = null;
+        timer.cancel();
+      }
+    });
+    return completer.future.then((value) => value);
   }
 
   Future<bool?> checkAllPermission() async {
@@ -162,11 +186,21 @@ class DeepArPlatformHandler {
     return _avCameraChannel(view).invokeMethod<bool>("flip_camera");
   }
 
-  Future<File?> takeScreenShot() async {
-    await _cameraXChannel.invokeMethod("take_screenshot");
+  Future<String?> takeScreenShot() async {
+    await _channel.invokeMethod("take_screenshot");
+    final Completer<String> completer = Completer<String>();
+    Timer.periodic(const Duration(milliseconds: 200), (timer) {
+      if (_screenshotResponse == ScreenshotResponse.screenshotTaken) {
+        completer.complete(_screenshotFilePath);
+        _screenshotFilePath = null;
+        _screenshotResponse = null;
+        timer.cancel();
+      }
+    });
+    return completer.future.then((value) => value);
   }
 
-  Future<File?> takeScreenShotIos(int view) async {
+  Future<String?> takeScreenShotIos(int view) async {
     await _avCameraChannel(view).invokeMethod<String>("take_screenshot");
   }
 
@@ -178,6 +212,4 @@ class DeepArPlatformHandler {
     return await _avCameraChannel(view).invokeMethod<bool>("toggle_flash") ??
         false;
   }
-
-
 }

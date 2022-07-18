@@ -118,18 +118,18 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         case "start_recording_video":
             startRecordingVideo();
             ///TODO: Send confirmation when callback received
-            result("Starting to record");
+            result("STARTING_TO_RECORD");
         case "stop_recording_video":
             finishRecordingVideo();
             ///TODO: Send confirmation when callback received
-            result("stopping recording");
+            result("STOPPING_RECORDING");
         case "get_resolution":
             //            let width: Int32 = Int32(deepAR.renderingResolution.width)
             //            let height: Int32 =  Int32(deepAR.renderingResolution.height)
             result(String(1280) + " " + String(720));
         case "take_screenshot":
             deepAR.takeScreenshot()
-            result("Screenshot called");
+            result("SCREENSHOT_TRIGGERED");
         case "flip_camera":
             cameraController.position = cameraController.position == .back ? .front : .back
             result(true);
@@ -237,16 +237,7 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         let components = videoFilePath.components(separatedBy: "/")
         guard let last = components.last else { return }
         
-        self.videoFilePath = videoFilePath
-//        let destination = URL(fileURLWithPath: String(format: "%@/%@", documentsDirectory, last))
-//        
-//        let playerController = AVPlayerViewController()
-//        let player = AVPlayer(url: destination)
-//        playerController.player = player
-//        UIApplication.shared.keyWindow?.rootViewController?.present(playerController, animated: true) {
-//            player.play()
-//        }
-        
+        self.videoFilePath = videoFilePath        
         videoResult(callerResponse: DeepArResponse.videoCompleted, message: "video completed")
     }
     
