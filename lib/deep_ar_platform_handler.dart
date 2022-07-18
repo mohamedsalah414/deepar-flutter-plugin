@@ -127,7 +127,12 @@ class DeepArPlatformHandler {
     await _channel.invokeMethod(PlatformStrings.stopRecordingVideo);
     final Completer completer = Completer<String>();
     Timer.periodic(const Duration(milliseconds: 200), (timer) {
-      if (_videoResponse == VideoResponse.videoCompleted) {
+      if (timer.tick > 20) {
+        completer.complete("ENDED_WITH_ERROR");
+        _videoFilePath = null;
+        _videoResponse = null;
+        timer.cancel();
+      } else if (_videoResponse == VideoResponse.videoCompleted) {
         completer.complete(_videoFilePath);
         _videoFilePath = null;
         _videoResponse = null;
@@ -152,7 +157,12 @@ class DeepArPlatformHandler {
         .invokeMethod<String>(PlatformStrings.stopRecordingVideo);
     final Completer completer = Completer<String>();
     Timer.periodic(const Duration(milliseconds: 200), (timer) {
-      if (_videoResponse == VideoResponse.videoCompleted) {
+      if (timer.tick > 20) {
+        completer.complete("ENDED_WITH_ERROR");
+        _videoFilePath = null;
+        _videoResponse = null;
+        timer.cancel();
+      } else if (_videoResponse == VideoResponse.videoCompleted) {
         completer.complete(_videoFilePath);
         _videoFilePath = null;
         _videoResponse = null;
@@ -185,7 +195,12 @@ class DeepArPlatformHandler {
     await _channel.invokeMethod("take_screenshot");
     final Completer<String> completer = Completer<String>();
     Timer.periodic(const Duration(milliseconds: 200), (timer) {
-      if (_screenshotResponse == ScreenshotResponse.screenshotTaken) {
+      if (timer.tick > 20) {
+        completer.complete("ENDED_WITH_ERROR");
+        _screenshotFilePath = null;
+        _screenshotResponse = null;
+        timer.cancel();
+      } else if (_screenshotResponse == ScreenshotResponse.screenshotTaken) {
         completer.complete(_screenshotFilePath);
         _screenshotFilePath = null;
         _screenshotResponse = null;
@@ -199,7 +214,12 @@ class DeepArPlatformHandler {
     await _avCameraChannel(view).invokeMethod<String>("take_screenshot");
     final Completer<String> completer = Completer<String>();
     Timer.periodic(const Duration(milliseconds: 200), (timer) {
-      if (_screenshotResponse == ScreenshotResponse.screenshotTaken) {
+      if (timer.tick > 20) {
+        completer.complete("ENDED_WITH_ERROR");
+        _screenshotFilePath = null;
+        _screenshotResponse = null;
+        timer.cancel();
+      } else if (_screenshotResponse == ScreenshotResponse.screenshotTaken) {
         completer.complete(_screenshotFilePath);
         _screenshotFilePath = null;
         _screenshotResponse = null;
