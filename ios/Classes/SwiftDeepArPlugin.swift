@@ -13,25 +13,4 @@ public class SwiftDeepArPlugin: NSObject, FlutterPlugin{
         let factory = DeepARCameraFactory(messenger: registrar.messenger(), registrar: registrar);
         registrar.register(factory, withId: "deep_ar_view");
     }
-    
-    var registrar: FlutterPluginRegistrar? = nil
-    
-    
-    
-    public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-        
-        let args = call.arguments as? [String : Any]
-        
-        switch call.method {
-        case "check_all_permission":
-            result(isMediaPermissionGranted())
-        default:
-            result("Failed to call iOS platform method")
-        }
-    }
-    
-    private func isMediaPermissionGranted() -> Bool{
-        return (AVCaptureDevice.authorizationStatus(for: .video) ==  .authorized) && (AVCaptureDevice.authorizationStatus(for: .audio) ==  .authorized)
-    }
-    
 }
