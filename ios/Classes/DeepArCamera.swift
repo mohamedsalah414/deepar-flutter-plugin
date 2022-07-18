@@ -73,28 +73,19 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         binaryMessenger messenger: FlutterBinaryMessenger?,
         registrar: FlutterPluginRegistrar
     ) {
-        print("new native view");
         super.init()
-        print("0");
         self.frame = frame;
         self.registrar = registrar
-        print("1");
         if let dict = args as? [String: Any] {
-            print("license key");
-            print(dict["license_key"] as? String ?? "");
             self.licenseKey = (dict["license_key"] as? String ?? "")
             self.pictureQuality = PictureQuality.init(rawValue: dict["resolution"] as? String ?? "medium")
         }
-        print("2");
         channel = FlutterMethodChannel(name: "deep_ar/view/" + String(viewId), binaryMessenger: messenger!);
         channel.setMethodCallHandler(methodHandler);
-        print("3");
         createNativeView()
-        print("4");
-        
-        
-        
     }
+    
+    
     
     func methodHandler(_ call: FlutterMethodCall, result: @escaping FlutterResult){
         let args = call.arguments as? [String : Any]
@@ -119,15 +110,11 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
             
         case "start_recording_video":
             startRecordingVideo();
-            ///TODO: Send confirmation when callback received
             result("STARTING_TO_RECORD");
         case "stop_recording_video":
             finishRecordingVideo();
-            ///TODO: Send confirmation when callback received
             result("STOPPING_RECORDING");
         case "get_resolution":
-            //            let width: Int32 = Int32(deepAR.renderingResolution.width)
-            //            let height: Int32 =  Int32(deepAR.renderingResolution.height)
             result(String(1280) + " " + String(720));
         case "take_screenshot":
             deepAR.takeScreenshot()
@@ -138,6 +125,8 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         case "toggle_flash":
             let isFlash:Bool = toggleFlash()
             result(isFlash);
+        case "destroy":
+            deepAR.shutdown()
         default:
             result("No platform method found")
         }
@@ -183,7 +172,7 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
             do {
                 let _: () = try captureDevice.lockForConfiguration()
             } catch {
-                print("error 1")
+                print("Error while lockForConfiguration()")
             }
             
             if captureDevice.isTorchActive {
@@ -194,7 +183,7 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
                     let _ = try captureDevice.setTorchModeOn(level: 1.0)
                     return true // flash ON
                 } catch {
-                    print("error 2")
+                    print("Error while setTorchModeOn()")
                 }
             }
             

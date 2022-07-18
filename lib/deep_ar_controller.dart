@@ -143,7 +143,8 @@ class DeepArController {
     try {
       _deepArPlatformHandler.setListenerIos(_textureId!);
     } catch (e) {
-      debugPrint("Exception while setting iOS response listener, won't be able to notify flutter once files are available");
+      debugPrint(
+          "Exception while setting iOS response listener, won't be able to notify flutter once files are available");
       debugPrint("Error $e");
     }
   }
@@ -175,6 +176,7 @@ class DeepArController {
             _deepArPlatformHandler.switchFilterIos(filter, _textureId!));
   }
 
+  //Starts recording video
   Future<void> startVideoRecording() async {
     if (_isRecording) throw ("Recording already in progress");
     if (Platform.isAndroid) {
@@ -234,7 +236,13 @@ class DeepArController {
     return _flashState;
   }
 
-  
+  ///Destroy objects and free up memory
+  Future<void> onDestroy() async {
+    await platformRun(
+        androidFunction: _deepArPlatformHandler.onDestroy,
+        iOSFunction: () => _deepArPlatformHandler.onDestroyIos(_textureId!));
+  }
+
   Future<bool> _askMediaPermission() async {
     await [
       Permission.camera,

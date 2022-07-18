@@ -81,6 +81,14 @@ class _HomeState extends State<Home> {
   }
 
   @override
+  void dispose() {
+    if (_controller.isInitialized) {
+      _controller.onDestroy();
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
@@ -187,7 +195,6 @@ class _HomeState extends State<Home> {
                     String prevEffect = _getPrevEffect();
                     _controller.switchEffect(prevEffect);
                   }
-                  //_controller.switchEffect(prevEffect);
                 },
                 icon: const Icon(
                   Icons.arrow_back_ios,

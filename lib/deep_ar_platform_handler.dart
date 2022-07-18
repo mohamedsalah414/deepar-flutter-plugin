@@ -167,11 +167,6 @@ class DeepArPlatformHandler {
     return completer.future.then((value) => value);
   }
 
-  Future<bool?> checkAllPermission() async {
-    return await _channel
-        .invokeMethod<bool?>(PlatformStrings.checkAllPermission);
-  }
-
   Future<String?> getResolutionDimensions(int view) async {
     final dimensions = await _avCameraChannel(view)
         .invokeMethod<String?>(PlatformStrings.getResolution);
@@ -221,5 +216,13 @@ class DeepArPlatformHandler {
   Future<bool> toggleFlashIos(int view) async {
     return await _avCameraChannel(view).invokeMethod<bool>("toggle_flash") ??
         false;
+  }
+
+  Future<void> onDestroy() {
+    return _channel.invokeMethod<bool>("destroy");
+  }
+
+  Future<void> onDestroyIos(int view) {
+    return _avCameraChannel(view).invokeMethod<bool>("destroy");
   }
 }

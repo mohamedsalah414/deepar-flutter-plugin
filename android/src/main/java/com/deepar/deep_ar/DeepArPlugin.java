@@ -173,6 +173,14 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                 String filterName = extractFileName(filter);
                 deepAR.switchEffect("filters", "file:///android_asset/" + filterName);
                 break;
+            case "destroy":
+                if (deepAR == null) {
+                    return;
+                }
+                deepAR.setAREventListener(null);
+                deepAR.release();
+                deepAR = null;
+                break;
         }
 
 
