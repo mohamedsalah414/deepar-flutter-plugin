@@ -29,7 +29,6 @@ class __DeepArIosPreviewState extends State<_DeepArIosPreview> {
   @override
   Widget build(BuildContext context) {
     return widget.deepArController.buildPreview(oniOSViewCreated: () {
-      widget.deepArController.setNativeResponseListener();
       setState(() {});
     });
   }
