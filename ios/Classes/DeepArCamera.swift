@@ -15,6 +15,12 @@ enum PictureQuality: String {
     case veryHigh = "veryHigh"
 }
 
+enum DeepArResponse: String {
+    case videoStarted   = "videoStarted"
+    case videoCompleted   = "videoCompleted"
+    case videoError = "videoError"
+}
+
 class DeepARCameraFactory: NSObject, FlutterPlatformViewFactory {
     private var messenger: FlutterBinaryMessenger
     private var registrar: FlutterPluginRegistrar
@@ -53,7 +59,7 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
     
     private var pictureQuality:PictureQuality!
     private var licenseKey:String!
-    
+    private var videoFilePath:String!
     
     private var channel:FlutterMethodChannel!
     private var registrar: FlutterPluginRegistrar!
@@ -202,6 +208,12 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
     
     func didStartVideoRecording() {
         NSLog("didStartVideoRecording!!!!!")
+        videoResult(callerResponse: DeepArResponse.videoStarted, message: "video started")
+    }
+    
+    func recordingFailedWithError(_ error: Error!) {
+        NSLog("recordingFailedWithError!!!!!")
+        videoResult(callerResponse: DeepArResponse.videoError, message: "video error")
     }
     
     func didFinishVideoRecording(_ videoFilePath: String!) {
@@ -211,14 +223,24 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         let documentsDirectory = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
         let components = videoFilePath.components(separatedBy: "/")
         guard let last = components.last else { return }
-        let destination = URL(fileURLWithPath: String(format: "%@/%@", documentsDirectory, last))
         
-        let playerController = AVPlayerViewController()
-        let player = AVPlayer(url: destination)
-        playerController.player = player
-        UIApplication.shared.keyWindow?.rootViewController?.present(playerController, animated: true) {
-            player.play()
-        }
+//        print("output")
+//        print(documentsDirectory)
+//        print(components)
+//        print(last)
+//        print(videoFilePath)
+//        print("output end")
+        self.videoFilePath = videoFilePath
+//        let destination = URL(fileURLWithPath: String(format: "%@/%@", documentsDirectory, last))
+//        
+//        let playerController = AVPlayerViewController()
+//        let player = AVPlayer(url: destination)
+//        playerController.player = player
+//        UIApplication.shared.keyWindow?.rootViewController?.present(playerController, animated: true) {
+//            player.play()
+//        }
+        
+        videoResult(callerResponse: DeepArResponse.videoCompleted, message: "video completed")
     }
     
     func didTakeScreenshot(_ screenshot: UIImage!) {
@@ -249,6 +271,17 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         case .veryHigh:
             return CGSize(width: 1920, height: 1080);
         }
+    }
+    
+    func videoResult(callerResponse: DeepArResponse, message: String) {
+        var map = [String : String]()
+        map["caller"] = callerResponse.rawValue
+        map["message"] = message
+        if callerResponse == DeepArResponse.videoCompleted {
+            map["file_path"] = videoFilePath
+        }
+        
+        channel.invokeMethod("on_video_result", arguments: map)
     }
     
     @objc

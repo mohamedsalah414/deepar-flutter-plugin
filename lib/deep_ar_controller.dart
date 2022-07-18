@@ -23,13 +23,28 @@ class DeepArController {
   double? _aspectRatio;
   bool _hasPermission = false;
   String? _iosLicenseKey;
-  //bool _isRecording = false;
+  bool _isRecording = false;
 
   CameraDirection _cameraDirection = CameraDirection.front;
   bool _flashState = false;
 
-  DeepArController(this.onNativeResponse) {
-    _deepArPlatformHandler = DeepArPlatformHandler(onNativeResponse);
+  // DeepArController(this.onNativeResponse) {
+  //   _deepArPlatformHandler = DeepArPlatformHandler(onNativeResponse);
+  // }
+
+  DeepArController() {
+    _deepArPlatformHandler = DeepArPlatformHandler();
+  }
+
+  void setNativeResponseListener(
+      Function(DeepArNativeResponse response, {String? message, dynamic data})
+          listener) {
+    try {
+      onNativeResponse = listener;
+      _deepArPlatformHandler.setListener(listener, _textureId!);
+    } catch (e) {
+      print(e);
+    }
   }
 
   ///Return true if the camera preview is intialized
@@ -46,7 +61,7 @@ class DeepArController {
   double get aspectRatio => _aspectRatio ?? 1.0;
 
   ///Return true if the recording is in progress.
-  //bool get isRecording => _isRecording;
+  bool get isRecording => _isRecording;
 
   ///Size of the preview image
   ///
@@ -114,8 +129,10 @@ class DeepArController {
   ///Android layer uses FlutterTexture while iOS uses NativeViews.
   ///See: https://api.flutter.dev/flutter/widgets/Texture-class.html
   ///https://docs.flutter.dev/development/platform-integration/ios/platform-views
-  Widget buildPreview({Function? oniOSViewCreated}) {
+  // Widget buildPreview({Function? onAndroidViewCreated, Function? oniOSViewCreated}) {
+  Widget buildPreview({Function? onViewCreated}) {
     if (Platform.isAndroid) {
+      onViewCreated?.call();
       return Texture(textureId: _textureId!);
     } else if (Platform.isIOS) {
       return UiKitView(
@@ -135,7 +152,7 @@ class DeepArController {
                 _imageSize = sizeFromEncodedString(value);
                 _aspectRatio = _imageSize!.width / _imageSize!.height;
               }
-              oniOSViewCreated?.call();
+              onViewCreated?.call();
             });
           }));
     } else {
@@ -153,24 +170,24 @@ class DeepArController {
   }
 
   Future<void> startVideoRecording() async {
-    //if (_isRecording) throw ("Recording already in progress");
+    if (_isRecording) throw ("Recording already in progress");
     if (Platform.isAndroid) {
       _deepArPlatformHandler.startRecordingVideoAndroid();
-      //_isRecording = true;
+      _isRecording = true;
     } else {
       _deepArPlatformHandler.startRecordingVideoIos(_textureId!);
-      //_isRecording = true;
+      _isRecording = true;
     }
   }
 
   Future<File?> stopVideoRecording() async {
-    // if (!_isRecording)
-    //   throw ("Invalid stopVideoRecording trigger. No recording was in progress");
+    if (!_isRecording)
+      throw ("Invalid stopVideoRecording trigger. No recording was in progress");
     final _file = await platformRun(
         androidFunction: _deepArPlatformHandler.stopRecordingVideoAndroid,
         iOSFunction: () =>
             _deepArPlatformHandler.stopRecordingVideoIos(_textureId!));
-    // _isRecording = false;
+    _isRecording = false;
     return _file;
   }
 

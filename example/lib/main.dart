@@ -45,7 +45,6 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   late final DeepArController _controller;
-  bool _isRecording = false;
   String version = '';
 
   final List<String> _effectsList = [];
@@ -55,7 +54,8 @@ class _HomeState extends State<Home> {
 
   @override
   void initState() {
-    _controller = DeepArController(onNativeResponse);
+    //_controller = DeepArController(onNativeResponse);
+    _controller = DeepArController();
     _controller
         .initialize(
           androidLicenseKey:
@@ -79,7 +79,13 @@ class _HomeState extends State<Home> {
     return Stack(
       children: [
         _controller.isInitialized
-            ? DeepArPreview(_controller)
+            ? DeepArPreview(
+                _controller,
+                () {
+                  print("setNativeResponseListener");
+                  _controller.setNativeResponseListener(onNativeResponse);
+                },
+              )
             : const Center(
                 child: Text("Something went wrong while initializing DeepAR"),
               ),
@@ -176,7 +182,7 @@ class _HomeState extends State<Home> {
                 )),
             IconButton(
                 onPressed: () {
-                  if (_isRecording) {
+                  if (_controller.isRecording) {
                     _controller.stopVideoRecording();
                   } else {
                     _controller.startVideoRecording();
@@ -186,7 +192,7 @@ class _HomeState extends State<Home> {
                 },
                 iconSize: 50,
                 color: Colors.white70,
-                icon: Icon(_isRecording
+                icon: Icon(_controller.isRecording
                     ? Icons.videocam_sharp
                     : Icons.videocam_outlined)),
             const SizedBox(width: 20),
@@ -257,18 +263,17 @@ class _HomeState extends State<Home> {
   /// Callback from native for essential features
   void onNativeResponse(DeepArNativeResponse response,
       {dynamic data, String? message}) {
-    
     switch (response) {
       case DeepArNativeResponse.videoStarted:
-        _isRecording = true;
+        //_isRecording = true;
         break;
 
       case DeepArNativeResponse.videoError:
-        _isRecording = false;
+        //_isRecording = false;
         break;
 
       case DeepArNativeResponse.videoCompleted:
-        _isRecording = false;
+        //_isRecording = false;
         String? filePath = data; // Get filePath in data
         saveInStorage(filePath);
         break;

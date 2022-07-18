@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:deep_ar/deep_ar_controller.dart';
@@ -16,8 +17,25 @@ class DeepArPlatformHandler {
   late final void Function(DeepArNativeResponse response,
       {String? message, dynamic data}) onNativeResponse;
 
-  DeepArPlatformHandler(this.onNativeResponse) {
-    _channel.setMethodCallHandler(listenFromNativeMethodHandler);
+  static String? _videoRecordSuccess;
+
+  // DeepArPlatformHandler(this.onNativeResponse) {
+  //   if (Platform.isAndroid) {
+  //     _channel.setMethodCallHandler(listenFromNativeMethodHandler);
+  //   }
+  // }
+
+  void setListener(
+      Function(DeepArNativeResponse response, {String? message, dynamic data})
+          listener,
+      int view) {
+    onNativeResponse = listener;
+    if (Platform.isAndroid) {
+      _channel.setMethodCallHandler(listenFromNativeMethodHandler);
+    } else {
+      _avCameraChannel(view)
+          .setMethodCallHandler(listenFromNativeMethodHandler);
+    }
   }
 
   Future<void> listenFromNativeMethodHandler(MethodCall call) async {
@@ -29,8 +47,11 @@ class DeepArPlatformHandler {
         String caller = data['caller'];
         String? filePath = data['file_path'];
         String message = data['message'] ?? "";
-        
-        DeepArNativeResponse response = DeepArNativeResponse.values.byName(caller);
+
+        // isSuccess or isFail
+
+        DeepArNativeResponse response =
+            DeepArNativeResponse.values.byName(caller);
         onNativeResponse(response, message: message, data: filePath);
         break;
       default:
@@ -85,6 +106,15 @@ class DeepArPlatformHandler {
   Future<File?> stopRecordingVideoIos(int view) async {
     await _avCameraChannel(view)
         .invokeMethod<String>(PlatformStrings.stopRecordingVideo);
+
+    // Timer.periodic(
+    //   Duration(milliseconds: 50),
+    //   (timer) {
+    //     if (_videoRecordSuccess != null) {
+    //       return _videoRecordSuccess;
+    //     }
+    //   },
+    // );
   }
 
   Future<bool?> checkAllPermission() async {
