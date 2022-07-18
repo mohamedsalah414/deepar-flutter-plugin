@@ -1,26 +1,17 @@
 package com.deepar.deep_ar;
 
 import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
-import android.Manifest;
 import android.app.Activity;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.media.Image;
 import android.media.MediaScannerConnection;
-import android.os.Environment;
-import android.os.Handler;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Surface;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,7 +49,6 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
     private DeepAR deepAR;
     private Surface surface;
     private long textureId;
-    private DeepArEffects deepArEffects;
     private FlutterPluginBinding flutterPlugin;
     private SurfaceTexture tempSurfaceTexture;
     private String videoFilePath;
@@ -83,7 +73,6 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
 
     private void onActivityAttached(@NonNull ActivityPluginBinding binding) {
         activity = binding.getActivity();
-        deepArEffects = new DeepArEffects();
         setDeepArMethodChannel();
         binding.addRequestPermissionsResultListener(this);
     }
