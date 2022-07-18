@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:deep_ar/deep_ar_controller.dart';
 import 'package:deep_ar/platform_strings.dart';
 import 'package:deep_ar/resolution_preset.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 enum VideoResponse { videoStarted, videoCompleted, videoError }
@@ -28,7 +28,7 @@ class DeepArPlatformHandler {
     }
   }
 
-  void setListener(int view) {
+  void setListenerIos(int view) {
     _avCameraChannel(view).setMethodCallHandler(listenFromNativeMethodHandler);
   }
 
@@ -60,7 +60,7 @@ class DeepArPlatformHandler {
 
         break;
       default:
-        print('no method handler for method ${call.method}');
+        debugPrint('no method handler for method ${call.method}');
     }
   }
 

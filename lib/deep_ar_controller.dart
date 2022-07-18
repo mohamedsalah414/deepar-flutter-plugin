@@ -26,14 +26,6 @@ class DeepArController {
     _deepArPlatformHandler = DeepArPlatformHandler();
   }
 
-  void setNativeResponseListener() {
-    try {
-      _deepArPlatformHandler.setListener(_textureId!);
-    } catch (e) {
-      print(e);
-    }
-  }
-
   ///Return true if the camera preview is intialized
   ///
   ///For [iOS], please call the function after [DeepArPreview] widget has been built.
@@ -111,7 +103,7 @@ class DeepArController {
   ///[oniOSViewCreated] callback to update [imageDimensions] and [aspectRatio] after iOS
   ///widget is built
   ///
-  ///Not recommneded to use directly. Please use the wrapper [DeepArPreview] instead.
+  ///Not recommended to use directly. Please use the wrapper [DeepArPreview] instead.
   ///
   ///Android layer uses FlutterTexture while iOS uses NativeViews.
   ///See: https://api.flutter.dev/flutter/widgets/Texture-class.html
@@ -137,11 +129,22 @@ class DeepArController {
                 _imageSize = sizeFromEncodedString(value);
                 _aspectRatio = _imageSize!.width / _imageSize!.height;
               }
+              _setNativeListenerIos();
               oniOSViewCreated?.call();
             });
           }));
     } else {
       throw ("Platform not supported.");
+    }
+  }
+
+  ///Listen to native delegate methods
+  void _setNativeListenerIos() {
+    try {
+      _deepArPlatformHandler.setListenerIos(_textureId!);
+    } catch (e) {
+      debugPrint("Exception while setting iOS response listener, won't be able to notify flutter once files are available");
+      debugPrint("Error $e");
     }
   }
 
@@ -163,7 +166,7 @@ class DeepArController {
             _deepArPlatformHandler.switchFaceMaskIos(mask, _textureId!));
   }
 
-  ///Switch DeepAR with the passed [filter] path fromfresol assets
+  ///Switch DeepAR with the passed [filter] path from assets
   Future<String?> switchFilter(String? filter) {
     return platformRun(
         androidFunction: () =>
@@ -231,12 +234,7 @@ class DeepArController {
     return _flashState;
   }
 
-  Size toSize(Map<dynamic, dynamic> data) {
-    final width = data['width'];
-    final height = data['height'];
-    return Size(width, height);
-  }
-
+  
   Future<bool> _askMediaPermission() async {
     await [
       Permission.camera,
