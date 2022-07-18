@@ -238,13 +238,10 @@ class DeepArController {
     await [
       Permission.camera,
       Permission.microphone,
-      Permission.photos,
-      Permission.storage,
     ].request();
 
     if (await Permission.camera.isGranted &&
-        await Permission.microphone.isGranted &&
-        await Permission.storage.isGranted) {
+        await Permission.microphone.isGranted) {
       return true;
     }
 
