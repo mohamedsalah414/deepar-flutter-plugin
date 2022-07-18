@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/material.dart';
 import 'package:deep_ar/deep_ar.dart';
 import 'dart:convert';
@@ -133,7 +136,14 @@ class _HomeState extends State<Home> {
             IconButton(
                 onPressed: () async {
                   if (_controller.isRecording) {
-                    await _controller.stopVideoRecording();
+                    File? file = await _controller.stopVideoRecording();
+                    Fluttertoast.showToast(
+                        msg: "Saved at ${file?.path}",
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.CENTER,
+                        backgroundColor: Colors.grey,
+                        textColor: Colors.white,
+                        fontSize: 16.0);
                   } else {
                     _controller.startVideoRecording();
                   }
