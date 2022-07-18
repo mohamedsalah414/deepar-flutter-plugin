@@ -1,6 +1,3 @@
-import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:deep_ar/deep_ar.dart';
 import 'dart:convert';
@@ -45,7 +42,6 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   late final DeepArController _controller;
-  bool _isRecording = false;
   String version = '';
 
   final List<String> _effectsList = [];
@@ -55,7 +51,7 @@ class _HomeState extends State<Home> {
 
   @override
   void initState() {
-    _controller = DeepArController(onNativeResponse);
+    _controller = DeepArController();
     _controller
         .initialize(
           androidLicenseKey:
@@ -81,7 +77,7 @@ class _HomeState extends State<Home> {
         _controller.isInitialized
             ? DeepArPreview(_controller)
             : const Center(
-                child: Text("Something went wrong while initializing DeepAR"),
+                child: Text("Loading..."),
               ),
         Positioned(
             top: 10,
@@ -110,46 +106,6 @@ class _HomeState extends State<Home> {
         _mediaOptions(),
       ],
     );
-
-    // return _controller.isPermission
-    //     ? Stack(
-    //         children: [
-    //           _controller.isInitialized
-    //               ? DeepArPreview(_controller)
-    //               : const Center(
-    //                   child: Text(
-    //                       "Something went wrong while initializing DeepAR"),
-    //                 ),
-    //           Positioned(
-    //               top: 10,
-    //               right: 10,
-    //               child: IconButton(
-    //                   onPressed: () {
-    //                     _controller.toggleFlash();
-    //                     setState(() {
-    //                       isFlashOn = !isFlashOn;
-    //                     });
-    //                   },
-    //                   color: Colors.white70,
-    //                   iconSize: 40,
-    //                   icon:
-    //                       Icon(isFlashOn ? Icons.flash_on : Icons.flash_off))),
-    //           _mediaOptions(),
-    //         ],
-    //       )
-    //     : Center(
-    //         child: Column(
-    //           mainAxisAlignment: MainAxisAlignment.center,
-    //           children: [
-    //             ElevatedButton(
-    //                 onPressed: () async {
-    //                   _initializeDeepAr();
-    //                 },
-    //                 child:
-    //                     const Text("Click here to update permission status")),
-    //           ],
-    //         ),
-    //       );
   }
 
   /// Sample option which can be performed
@@ -175,9 +131,9 @@ class _HomeState extends State<Home> {
                   color: Colors.white70,
                 )),
             IconButton(
-                onPressed: () {
-                  if (_isRecording) {
-                    _controller.stopVideoRecording();
+                onPressed: () async {
+                  if (_controller.isRecording) {
+                    await _controller.stopVideoRecording();
                   } else {
                     _controller.startVideoRecording();
                   }
@@ -186,7 +142,7 @@ class _HomeState extends State<Home> {
                 },
                 iconSize: 50,
                 color: Colors.white70,
-                icon: Icon(_isRecording
+                icon: Icon(_controller.isRecording
                     ? Icons.videocam_sharp
                     : Icons.videocam_outlined)),
             const SizedBox(width: 20),
@@ -252,50 +208,5 @@ class _HomeState extends State<Home> {
   String _getPrevEffect() {
     _effectIndex > 0 ? _effectIndex-- : _effectIndex = _effectsList.length;
     return _effectsList[_effectIndex];
-  }
-
-  /// Callback from native for essential features
-  void onNativeResponse(DeepArNativeResponse response,
-      {dynamic data, String? message}) {
-    
-    switch (response) {
-      case DeepArNativeResponse.videoStarted:
-        _isRecording = true;
-        break;
-
-      case DeepArNativeResponse.videoError:
-        _isRecording = false;
-        break;
-
-      case DeepArNativeResponse.videoCompleted:
-        _isRecording = false;
-        String? filePath = data; // Get filePath in data
-        saveInStorage(filePath);
-        break;
-      default:
-    }
-
-    setState(() {});
-  }
-
-  Future saveInStorage(String? filePath) async {
-    if (!Platform.isAndroid) {
-      print("This method works on android only");
-      return;
-    }
-
-    if (filePath != null && filePath.isEmpty) {
-      print("filePath can't be empty");
-      return;
-    }
-
-    File videoFile = File(filePath!);
-    Directory dir = Directory('/storage/emulated/0/Download');
-    String fileName = videoFile.path.split('/').last;
-    final File file = File('${dir.path}/$fileName');
-    await file.create();
-
-    Uint8List bytes = await videoFile.readAsBytes();
-    await file.writeAsBytes(bytes);
   }
 }

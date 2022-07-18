@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:deep_ar/deep_ar_controller.dart';
@@ -16,8 +17,16 @@ class DeepArPlatformHandler {
   late final void Function(DeepArNativeResponse response,
       {String? message, dynamic data}) onNativeResponse;
 
-  DeepArPlatformHandler(this.onNativeResponse) {
-    _channel.setMethodCallHandler(listenFromNativeMethodHandler);
+  static String? _videoFilePath = "N/A";
+
+  DeepArPlatformHandler() {
+    if (Platform.isAndroid) {
+      _channel.setMethodCallHandler(listenFromNativeMethodHandler);
+    }
+  }
+
+  void setListener(int view) {
+    _avCameraChannel(view).setMethodCallHandler(listenFromNativeMethodHandler);
   }
 
   Future<void> listenFromNativeMethodHandler(MethodCall call) async {
@@ -29,9 +38,22 @@ class DeepArPlatformHandler {
         String caller = data['caller'];
         String? filePath = data['file_path'];
         String message = data['message'] ?? "";
-        
-        DeepArNativeResponse response = DeepArNativeResponse.values.byName(caller);
-        onNativeResponse(response, message: message, data: filePath);
+
+        // isSuccess or isFail
+
+        DeepArNativeResponse response =
+            DeepArNativeResponse.values.byName(caller);
+
+        print("WAITTT : $caller => $filePath");
+
+        if (response == DeepArNativeResponse.videoCompleted) {
+          _videoFilePath = filePath;
+        } else {
+          _videoFilePath = null;
+        }
+        //isVideoResult = true;
+
+        //onNativeResponse(response, message: message, data: filePath);
         break;
       default:
         print('no method handler for method ${call.method}');
@@ -74,7 +96,11 @@ class DeepArPlatformHandler {
   }
 
   Future<File?> stopRecordingVideoAndroid() async {
-    await _channel.invokeMethod(PlatformStrings.stopRecordingVideo);
+    _channel.invokeMethod(PlatformStrings.stopRecordingVideo);
+
+    await Future.delayed(const Duration(seconds: 1));
+    print("file_path : $_videoFilePath");
+    return File(_videoFilePath!);
   }
 
   Future<void> startRecordingVideoIos(int view) async {
@@ -83,8 +109,12 @@ class DeepArPlatformHandler {
   }
 
   Future<File?> stopRecordingVideoIos(int view) async {
-    await _avCameraChannel(view)
+    _avCameraChannel(view)
         .invokeMethod<String>(PlatformStrings.stopRecordingVideo);
+
+    await Future.delayed(const Duration(seconds: 1));
+    print("file_path : $_videoFilePath");
+    return File(_videoFilePath!);
   }
 
   Future<bool?> checkAllPermission() async {

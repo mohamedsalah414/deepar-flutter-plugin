@@ -11,11 +11,7 @@ import 'package:permission_handler/permission_handler.dart';
 enum DeepArNativeResponse { videoStarted, videoCompleted, videoError }
 
 class DeepArController {
-  //DeepArController() : super();
   late final DeepArPlatformHandler _deepArPlatformHandler;
-  late final void Function(DeepArNativeResponse response,
-      {String? message, dynamic data}) onNativeResponse;
-
   late final Resolution _resolution;
 
   int? _textureId;
@@ -23,13 +19,21 @@ class DeepArController {
   double? _aspectRatio;
   bool _hasPermission = false;
   String? _iosLicenseKey;
-  //bool _isRecording = false;
+  bool _isRecording = false;
 
   CameraDirection _cameraDirection = CameraDirection.front;
   bool _flashState = false;
 
-  DeepArController(this.onNativeResponse) {
-    _deepArPlatformHandler = DeepArPlatformHandler(onNativeResponse);
+  DeepArController() {
+    _deepArPlatformHandler = DeepArPlatformHandler();
+  }
+
+  void setNativeResponseListener() {
+    try {
+      _deepArPlatformHandler.setListener(_textureId!);
+    } catch (e) {
+      print(e);
+    }
   }
 
   ///Return true if the camera preview is intialized
@@ -46,7 +50,7 @@ class DeepArController {
   double get aspectRatio => _aspectRatio ?? 1.0;
 
   ///Return true if the recording is in progress.
-  //bool get isRecording => _isRecording;
+  bool get isRecording => _isRecording;
 
   ///Size of the preview image
   ///
@@ -153,24 +157,25 @@ class DeepArController {
   }
 
   Future<void> startVideoRecording() async {
-    //if (_isRecording) throw ("Recording already in progress");
+    if (_isRecording) throw ("Recording already in progress");
     if (Platform.isAndroid) {
       _deepArPlatformHandler.startRecordingVideoAndroid();
-      //_isRecording = true;
+      _isRecording = true;
     } else {
       _deepArPlatformHandler.startRecordingVideoIos(_textureId!);
-      //_isRecording = true;
+      _isRecording = true;
     }
   }
 
   Future<File?> stopVideoRecording() async {
-    // if (!_isRecording)
-    //   throw ("Invalid stopVideoRecording trigger. No recording was in progress");
+    if (!_isRecording)
+      throw ("Invalid stopVideoRecording trigger. No recording was in progress");
     final _file = await platformRun(
         androidFunction: _deepArPlatformHandler.stopRecordingVideoAndroid,
         iOSFunction: () =>
             _deepArPlatformHandler.stopRecordingVideoIos(_textureId!));
-    // _isRecording = false;
+    _isRecording = false;
+    print("file_path_ ${_file?.path}");
     return _file;
   }
 
