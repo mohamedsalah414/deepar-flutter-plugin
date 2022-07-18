@@ -202,6 +202,16 @@ class DeepArPlatformHandler {
 
   Future<String?> takeScreenShotIos(int view) async {
     await _avCameraChannel(view).invokeMethod<String>("take_screenshot");
+    final Completer<String> completer = Completer<String>();
+    Timer.periodic(const Duration(milliseconds: 200), (timer) {
+      if (_screenshotResponse == ScreenshotResponse.screenshotTaken) {
+        completer.complete(_screenshotFilePath);
+        _screenshotFilePath = null;
+        _screenshotResponse = null;
+        timer.cancel();
+      }
+    });
+    return completer.future.then((value) => value);
   }
 
   Future<bool> toggleFlash() async {

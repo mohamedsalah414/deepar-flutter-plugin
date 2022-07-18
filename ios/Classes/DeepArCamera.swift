@@ -19,6 +19,7 @@ enum DeepArResponse: String {
     case videoStarted   = "videoStarted"
     case videoCompleted   = "videoCompleted"
     case videoError = "videoError"
+    case screenshotTaken = "screenshotTaken"
 }
 
 class DeepARCameraFactory: NSObject, FlutterPlatformViewFactory {
@@ -60,6 +61,7 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
     private var pictureQuality:PictureQuality!
     private var licenseKey:String!
     private var videoFilePath:String!
+    private var screenshotFilePath:String!
     
     private var channel:FlutterMethodChannel!
     private var registrar: FlutterPluginRegistrar!
@@ -232,17 +234,19 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
     func didFinishVideoRecording(_ videoFilePath: String!) {
         
         NSLog("didFinishVideoRecording!!!!!")
-        
-        let documentsDirectory = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
-        let components = videoFilePath.components(separatedBy: "/")
-        guard let last = components.last else { return }
-        
         self.videoFilePath = videoFilePath        
         videoResult(callerResponse: DeepArResponse.videoCompleted, message: "video completed")
     }
     
     func didTakeScreenshot(_ screenshot: UIImage!) {
-        UIImageWriteToSavedPhotosAlbum(screenshot, nil, nil, nil)
+        if let data = screenshot.pngData() {
+            
+            let filename = FileManager.default.urls(for: .documentDirectory, in:.userDomainMask)[0] .appendingPathComponent(String(NSDate().timeIntervalSince1970).replacingOccurrences(of: ".", with: "-") + ".png")
+               try? data.write(to: filename)
+            screenshotFilePath = filename.path;
+            screenshotResult(callerResponse: DeepArResponse.screenshotTaken, message: "Screenshot_taken")
+           }
+        
     }
     
     func presetForPictureQuality(pictureQuality: PictureQuality) -> AVCaptureSession.Preset {
@@ -280,6 +284,16 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         }
         
         channel.invokeMethod("on_video_result", arguments: map)
+    }
+    func screenshotResult(callerResponse: DeepArResponse, message: String) {
+        var map = [String : String]()
+        map["caller"] = callerResponse.rawValue
+        map["message"] = message
+        if callerResponse == DeepArResponse.screenshotTaken {
+            map["file_path"] = screenshotFilePath
+        }
+        
+        channel.invokeMethod("on_screenshot_result", arguments: map)
     }
     
     @objc
