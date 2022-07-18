@@ -163,6 +163,26 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
             case MethodStrings.stopRecordingVideo:
                 deepAR.stopVideoRecording();
                 break;
+
+            case "switch_face_mask":
+                String mask = ((String) arguments.get("effect"));
+                if (mask == null || mask.equals("null")){
+                    deepAR.switchEffect("mask", "null");
+                    return;
+                }
+                String maskName = extractFileName(mask);
+                deepAR.switchEffect("mask", "file:///android_asset/" + maskName);
+                break;
+
+            case "switch_filter":
+                String filter = ((String) arguments.get("effect"));
+                if (filter == null || filter.equals("null")){
+                    deepAR.switchEffect("filters", "null");
+                    return;
+                }
+                String filterName = extractFileName(filter);
+                deepAR.switchEffect("filters", "file:///android_asset/" + filterName);
+                break;
         }
 
 
