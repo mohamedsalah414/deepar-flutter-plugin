@@ -78,16 +78,42 @@ class DeepArPlatformHandler {
     return texturedId;
   }
 
-  Future<String?> switchEffectAndroid(String effect) {
+  Future<String?> switchEffectAndroid(String? effect) {
     return _channel.invokeMethod<String>(PlatformStrings.switchEffect, {
       PlatformStrings.effect: effect,
     });
   }
 
-  Future<String?> switchCameraIos(String effect, int view) {
+  Future<String?> switchCameraIos(String? effect, int view) {
     return _avCameraChannel(view)
         .invokeMethod<String>(PlatformStrings.switchEffect, {
       PlatformStrings.effect: effect,
+    });
+  }
+
+  Future<String?> switchFaceMaskAndroid(String? mask) {
+    return _channel.invokeMethod<String>('switch_face_mask', {
+      PlatformStrings.effect: mask,
+    });
+  }
+
+  Future<String?> switchFaceMaskIos(String? mask, int view) {
+    return _avCameraChannel(view)
+        .invokeMethod<String>('switch_face_mask', {
+      PlatformStrings.effect: mask,
+    });
+  }
+
+  Future<String?> switchFilterAndroid(String? mask) {
+    return _channel.invokeMethod<String>('switch_filter', {
+      PlatformStrings.effect: mask,
+    });
+  }
+
+  Future<String?> switchFilterIos(String? mask, int view) {
+    return _avCameraChannel(view)
+        .invokeMethod<String>('switch_filter', {
+      PlatformStrings.effect: mask,
     });
   }
 
@@ -152,4 +178,6 @@ class DeepArPlatformHandler {
     return await _avCameraChannel(view).invokeMethod<bool>("toggle_flash") ??
         false;
   }
+
+
 }

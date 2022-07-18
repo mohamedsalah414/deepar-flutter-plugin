@@ -148,12 +148,30 @@ class DeepArController {
   }
 
   ///Switch DeepAR with the passed [effect] path fromfresol assets
-  Future<String?> switchEffect(String effect) {
+  Future<String?> switchEffect(String? effect) {
     return platformRun(
         androidFunction: () =>
             _deepArPlatformHandler.switchEffectAndroid(effect),
         iOSFunction: () =>
             _deepArPlatformHandler.switchCameraIos(effect, _textureId!));
+  }
+
+  ///Switch DeepAR with the passed [mask] path fromfresol assets
+  Future<String?> switchFaceMask(String? mask) {
+    return platformRun(
+        androidFunction: () =>
+            _deepArPlatformHandler.switchFaceMaskAndroid(mask),
+        iOSFunction: () =>
+            _deepArPlatformHandler.switchFaceMaskIos(mask, _textureId!));
+  }
+
+///Switch DeepAR with the passed [filter] path fromfresol assets
+  Future<String?> switchFilter(String? filter) {
+    return platformRun(
+        androidFunction: () =>
+            _deepArPlatformHandler.switchFilterAndroid(filter),
+        iOSFunction: () =>
+            _deepArPlatformHandler.switchFilterIos(filter, _textureId!));
   }
 
   Future<void> startVideoRecording() async {

@@ -100,8 +100,21 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         case "switch_effect":
             let effect:String = args?["effect"] as! String
             let key = registrar?.lookupKey(forAsset: effect)
-            let topPath = Bundle.main.path(forResource: key, ofType: nil)
-            deepAR.switchEffect(withSlot: "effect", path: topPath)
+            let path = Bundle.main.path(forResource: key, ofType: nil)
+            deepAR.switchEffect(withSlot: "effect", path: path)
+            
+        case "switch_face_mask":
+            let mask:String = args?["effect"] as! String
+            let key = registrar?.lookupKey(forAsset: mask)
+            let path = Bundle.main.path(forResource: key, ofType: nil)
+            deepAR.switchEffect(withSlot: "mask", path: path)
+            
+        case "switch_filter":
+            let filter:String = args?["effect"] as! String
+            let key = registrar?.lookupKey(forAsset: filter)
+            let path = Bundle.main.path(forResource: key, ofType: nil)
+            deepAR.switchEffect(withSlot: "filters", path: path)
+            
         case "start_recording_video":
             startRecordingVideo();
             ///TODO: Send confirmation when callback received
