@@ -12,7 +12,6 @@ public  class MethodStrings {
     public final static  String startCamera = "start_camera";
     public final static  String startRecordingVideo = "start_recording_video";
     public final static  String stopRecordingVideo = "stop_recording_video";
-    public final static  String checkAllPermission = "check_all_permission";
     public final  static  String dispose = "dispose";
 
     // Method arguments

@@ -1,17 +1,19 @@
 package com.deepar.deep_ar;
 
 import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
-import android.Manifest;
 import android.app.Activity;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.media.Image;
+import android.media.MediaScannerConnection;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Surface;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,11 +49,19 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
     private DeepAR deepAR;
     private Surface surface;
     private long textureId;
-    private DeepArEffects deepArEffects;
     private FlutterPluginBinding flutterPlugin;
     private SurfaceTexture tempSurfaceTexture;
+    private String videoFilePath;
+    private String screenshotPath;
 
     private CameraResolutionPreset resolutionPreset;
+
+    private enum DeepArResponse {
+        videoStarted,
+        videoCompleted,
+        videoError,
+        screenshotTaken
+    }
 
 
     @Override
@@ -63,23 +73,8 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
 
     private void onActivityAttached(@NonNull ActivityPluginBinding binding) {
         activity = binding.getActivity();
-        deepArEffects = new DeepArEffects();
         setDeepArMethodChannel();
         binding.addRequestPermissionsResultListener(this);
-    }
-
-    private boolean checkPermission(){
-        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO},
-                    1);
-            return false;
-        } else {
-            // Permission has already been granted
-            return true;
-        }
     }
 
     private void setDeepArMethodChannel() {
@@ -96,10 +91,6 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
         Map<String, Object> arguments = (Map<String, Object>) call.arguments;
 
         switch (call.method) {
-            case MethodStrings.checkAllPermission: // Check permission
-                boolean permission = checkPermission();
-                result.success(permission);
-                break;
             case MethodStrings.initialize: // Initialize
                 String licenseKey = (String) arguments.get(MethodStrings.licenseKey);
                 String resolution = (String) arguments.get(MethodStrings.resolution);
@@ -129,12 +120,55 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                 break;
 
             case MethodStrings.startRecordingVideo:
-                String filePath = ((String) arguments.get("file_path")).toString();
-                deepAR.startVideoRecording(filePath);
+                try {
+                    File file = File.createTempFile("deep_ar_", ".mp4");
+                    videoFilePath = file.getPath();
+                    deepAR.startVideoRecording(videoFilePath);
+                
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Log.e("DeepAR", "Error : Unable to create file");
+                    videoResult(DeepArResponse.videoError, "Exception while creating file");
+                }
+                result.success("STARTING_TO_RECORD");
+
                 break;
 
             case MethodStrings.stopRecordingVideo:
                 deepAR.stopVideoRecording();
+               result.success("STOPPING_RECORDING");
+                break;
+            case "take_screenshot":
+                deepAR.takeScreenshot();
+                result.success("SCREENSHOT_TRIGGERED");
+                break;
+
+            case "switch_face_mask":
+                String mask = ((String) arguments.get("effect"));
+                if (mask == null || mask.equals("null")){
+                    deepAR.switchEffect("mask", "null");
+                    return;
+                }
+                String maskName = extractFileName(mask);
+                deepAR.switchEffect("mask", "file:///android_asset/" + maskName);
+                break;
+
+            case "switch_filter":
+                String filter = ((String) arguments.get("effect"));
+                if (filter == null || filter.equals("null")){
+                    deepAR.switchEffect("filters", "null");
+                    return;
+                }
+                String filterName = extractFileName(filter);
+                deepAR.switchEffect("filters", "file:///android_asset/" + filterName);
+                break;
+            case "destroy":
+                if (deepAR == null) {
+                    return;
+                }
+                deepAR.setAREventListener(null);
+                deepAR.release();
+                deepAR = null;
                 break;
         }
 
@@ -203,22 +237,41 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
 
     @Override
     public void screenshotTaken(Bitmap bitmap) {
+        CharSequence now = DateFormat.format("yyyy_MM_dd_hh_mm_ss", new Date());
+        try {
+            //File imageFile = new File(activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "image_" + now + ".jpg");
 
+            // TODO: 15/07/22 replace with correct path
+            File imageFile = new File("/storage/emulated/0/Download", "image_" + now + ".jpg");
+            FileOutputStream outputStream = new FileOutputStream(imageFile);
+            int quality = 100;
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream);
+            outputStream.flush();
+            outputStream.close();
+            MediaScannerConnection.scanFile(activity, new String[]{imageFile.toString()}, null, null);
+            screenshotPath = imageFile.getPath();
+            screenshotResult(DeepArResponse.screenshotTaken, "screenshot taken");
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void videoRecordingStarted() {
-
+        Log.d(TAG, "videoRecordingStarted: "+videoFilePath);
+        videoResult(DeepArResponse.videoStarted, "video success");
     }
 
     @Override
     public void videoRecordingFinished() {
-
+        Log.d(TAG, "videoRecordingFinished: "+videoFilePath);
+        videoResult(DeepArResponse.videoCompleted, "video success");
     }
 
     @Override
     public void videoRecordingFailed() {
-
+        Log.d(TAG, "videoRecordingFailed: "+videoFilePath);
+        videoResult(DeepArResponse.videoError, "video failed");
     }
 
     @Override
@@ -264,6 +317,27 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
     public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         Log.d(TAG, "onRequestPermissionsResult: "+requestCode);
         return false;
+    }
+
+    private void videoResult(DeepArResponse callerResponse, String message){
+        Map<String, Object> map= new HashMap<String, Object>();
+        map.put("caller", callerResponse.name());
+        map.put("message", message);
+        if (callerResponse == DeepArResponse.videoCompleted){
+            map.put("file_path", videoFilePath);
+            videoFilePath = "";
+        }
+        channel.invokeMethod("on_video_result", map);
+    }
+    private void screenshotResult(DeepArResponse callerResponse, String message){
+        Map<String, Object> map= new HashMap<String, Object>();
+        map.put("caller", callerResponse.name());
+        map.put("message", message);
+        if (callerResponse == DeepArResponse.screenshotTaken){
+            map.put("file_path", screenshotPath);
+            screenshotPath = "";
+        }
+        channel.invokeMethod("on_screenshot_result", map);
     }
 
     private String extractFileName(String fullPathFile){
