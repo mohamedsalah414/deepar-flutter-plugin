@@ -65,9 +65,8 @@ class _HomeState extends State<Home> {
     _controller
         .initialize(
           androidLicenseKey:
-              "---android key---",
-          iosLicenseKey:
-              "---iOS key---",
+              "53de9b68021fd5be051ddd80c8d1aee5653eda7cabcd58776c1a96e5027f4a8c78d4946795ccd944",
+          iosLicenseKey: "---iOS key---",
           resolution: Resolution.high,
         )
         .then((value) => setState(() {}));
