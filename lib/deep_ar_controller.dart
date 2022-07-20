@@ -263,10 +263,18 @@ class DeepArController {
         iOSFunction: () => _deepArPlatformHandler.showStatsIos(_textureId!, enabled));
   }
 
+  ///Enable or disable global physics simulation.
   Future<void> simulatePhysics({required bool enabled}) async {
     await platformRun(
         androidFunction: () => _deepArPlatformHandler.simulatePhysics(enabled),
         iOSFunction: () => _deepArPlatformHandler.simulatePhysicsIos(_textureId!, enabled));
+  }
+
+  ///Display physics colliders preview on screen.
+  Future<void> showColliders({required bool enabled}) async {
+    await platformRun(
+        androidFunction: () => _deepArPlatformHandler.showColliders(enabled),
+        iOSFunction: () => _deepArPlatformHandler.showCollidersIos(_textureId!, enabled));
   }
 
   ///Releases all resources required by DeepAR.

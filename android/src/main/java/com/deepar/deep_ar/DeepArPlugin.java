@@ -187,6 +187,10 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                 enabled = ((boolean) arguments.get("enabled"));
                 deepAR.simulatePhysics(enabled);
                 break;
+            case "showColliders":
+                enabled = ((boolean) arguments.get("enabled"));
+                deepAR.showColliders(enabled);
+                break;
             case "destroy":
                 deepAR.release();
                 break;

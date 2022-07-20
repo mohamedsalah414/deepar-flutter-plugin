@@ -156,6 +156,9 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         case "simulatePhysics":
             let enabled:Bool = args?["enabled"] as! Bool
             deepAR.simulatePhysics(enabled)
+        case "showColliders":
+            let enabled:Bool = args?["enabled"] as! Bool
+            deepAR.showColliders(enabled)
         case "destroy":
             deepAR.shutdown()
             result("SHUTDOWN");

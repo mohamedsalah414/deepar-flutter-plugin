@@ -298,4 +298,13 @@ class DeepArPlatformHandler {
     return _avCameraChannel(view)
         .invokeMethod("simulatePhysics", {"enabled": enabled});
   }
+
+  Future<void> showColliders(bool enabled) {
+    return _channel.invokeMethod("showColliders", {"enabled": enabled});
+  }
+
+  Future<void> showCollidersIos(int view, bool enabled) {
+    return _avCameraChannel(view)
+        .invokeMethod("showColliders", {"enabled": enabled});
+  }
 }
