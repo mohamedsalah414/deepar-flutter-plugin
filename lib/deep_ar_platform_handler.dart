@@ -246,5 +246,23 @@ class DeepArPlatformHandler {
     return _avCameraChannel(view).invokeMethod<bool>("destroy");
   }
 
+  Future<void> switchEffectWithSlot(
+      {required String slot, required String path, String targetGameObject = '', int face = 0}) {
+    return _channel.invokeMethod("switchEffectWithSlot", {
+      "slot": slot,
+      "path": path,
+      "face": face,
+      "targetGameObject": targetGameObject,
+    });
+  }
 
+  Future<void> switchEffectWithSlotIos(int view,
+      {required String slot, required String path, String targetGameObject = '', int face = 0}) {
+    return _avCameraChannel(view).invokeMethod("switchEffectWithSlot", {
+      "slot": slot,
+      "path": path,
+      "face": face,
+      "targetGameObject": targetGameObject,
+    });
+  }
 }

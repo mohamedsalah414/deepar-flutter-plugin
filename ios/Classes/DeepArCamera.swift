@@ -8,6 +8,14 @@ import DeepAR
 import Foundation
 import AVKit
 
+extension String {
+    static func isNilOrEmpty(string: String?) -> Bool {
+        guard let value = string else { return true }
+        
+        return value.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+}
+
 enum PictureQuality: String {
     case low   = "low"
     case medium   = "medium"
@@ -108,6 +116,20 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
             let path = Bundle.main.path(forResource: key, ofType: nil)
             deepAR.switchEffect(withSlot: "filters", path: path)
             
+        case "switchEffectWithSlot":
+            let slot:String = args?["slot"] as! String
+            let path:String = args?["path"] as! String
+            let face = args?["face"] as! Int
+            let targetGameObject = args?["targetGameObject"] as? String
+            let isGameTargetEmpty = String.isNilOrEmpty(string: targetGameObject)
+            
+            if !isGameTargetEmpty {
+                deepAR.switchEffect(withSlot: slot, path: path, face: face, targetGameObject: targetGameObject)
+            }else{
+                deepAR.switchEffect(withSlot: slot, path: path, face: face)
+            }
+            
+            
         case "start_recording_video":
             startRecordingVideo();
             result("STARTING_TO_RECORD");
@@ -127,6 +149,7 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
             result(isFlash);
         case "destroy":
             deepAR.shutdown()
+            result("SHUTDOWN");
         default:
             result("No platform method found")
         }
@@ -223,7 +246,7 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
     func didFinishVideoRecording(_ videoFilePath: String!) {
         
         NSLog("didFinishVideoRecording!!!!!")
-        self.videoFilePath = videoFilePath        
+        self.videoFilePath = videoFilePath
         videoResult(callerResponse: DeepArResponse.videoCompleted, message: "video completed")
     }
     
@@ -231,10 +254,10 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         if let data = screenshot.pngData() {
             
             let filename = FileManager.default.urls(for: .documentDirectory, in:.userDomainMask)[0] .appendingPathComponent(String(NSDate().timeIntervalSince1970).replacingOccurrences(of: ".", with: "-") + ".png")
-               try? data.write(to: filename)
+            try? data.write(to: filename)
             screenshotFilePath = filename.path;
             screenshotResult(callerResponse: DeepArResponse.screenshotTaken, message: "Screenshot_taken")
-           }
+        }
         
     }
     

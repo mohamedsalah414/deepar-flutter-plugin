@@ -149,13 +149,26 @@ class DeepArController {
     }
   }
 
-  ///Switch DeepAR with the passed [effect] path fromfresol assets
+  ///Switch DeepAR with the passed [effect] path from assets
   Future<String?> switchEffect(String? effect) {
     return platformRun(
         androidFunction: () =>
             _deepArPlatformHandler.switchEffectAndroid(effect),
         iOSFunction: () =>
             _deepArPlatformHandler.switchCameraIos(effect, _textureId!));
+  }
+
+  ///Load contents of a DeepAR Studio file as an effect/filter in the scene
+  Future<void> switchEffectWithSlot(
+      {required String slot,
+      required String path,
+      String? targetGameObject,
+      int? face}) async {
+    await platformRun(
+        androidFunction: () =>
+            _deepArPlatformHandler.switchEffectWithSlot(slot: slot, path: path),
+        iOSFunction: () => _deepArPlatformHandler
+            .switchEffectWithSlotIos(_textureId!, slot: slot, path: path));
   }
 
   ///Switch DeepAR with the passed [mask] path fromfresol assets

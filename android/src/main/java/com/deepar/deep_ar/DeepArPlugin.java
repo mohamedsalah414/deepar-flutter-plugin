@@ -162,6 +162,18 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                 String filterName = extractFileName(filter);
                 deepAR.switchEffect("filters", "file:///android_asset/" + filterName);
                 break;
+            case "switchEffectWithSlot":
+                String slot = ((String) arguments.get("slot"));
+                String path = ((String) arguments.get("path"));
+                int face = ((int) arguments.get("face"));
+                String targetGameObject = ((String) arguments.get("targetGameObject"));
+
+                if (!targetGameObject.isEmpty()){
+                    deepAR.switchEffect(slot, path, face, targetGameObject);
+                }else{
+                    deepAR.switchEffect(slot, path, face);
+                }
+                break;
             case "destroy":
                 deepAR.release();
                 break;
