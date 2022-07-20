@@ -191,6 +191,11 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                 enabled = ((boolean) arguments.get("enabled"));
                 deepAR.showColliders(enabled);
                 break;
+            case "moveGameObject":
+                String selectedGameObjectName = ((String) arguments.get("selectedGameObjectName"));
+                String targetGameObjectName = ((String) arguments.get("targetGameObjectName"));
+                deepAR.moveGameObject(selectedGameObjectName, targetGameObjectName);
+                break;
             case "destroy":
                 deepAR.release();
                 break;

@@ -307,4 +307,20 @@ class DeepArPlatformHandler {
     return _avCameraChannel(view)
         .invokeMethod("showColliders", {"enabled": enabled});
   }
+
+  Future<void> moveGameObject(
+      String selectedGameObjectName, String targetGameObjectName) {
+    return _channel.invokeMethod("fireTrigger", {
+      "selectedGameObjectName": selectedGameObjectName,
+      "targetGameObjectName": targetGameObjectName
+    });
+  }
+
+  Future<void> moveGameObjectIos(int view, String selectedGameObjectName, String targetGameObjectName) {
+    return _avCameraChannel(view)
+        .invokeMethod("fireTrigger", {
+      "selectedGameObjectName": selectedGameObjectName,
+      "targetGameObjectName": targetGameObjectName
+    });
+  }
 }

@@ -159,6 +159,10 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         case "showColliders":
             let enabled:Bool = args?["enabled"] as! Bool
             deepAR.showColliders(enabled)
+        case "moveGameObject":
+            let selectedGameObjectName:String = args?["selectedGameObjectName"] as! String
+            let targetGameObjectName:String = args?["targetGameObjectName"] as! String
+            deepAR.moveGameObject(selectedGameObjectName, targetGameObjectname: targetGameObjectName)
         case "destroy":
             deepAR.shutdown()
             result("SHUTDOWN");

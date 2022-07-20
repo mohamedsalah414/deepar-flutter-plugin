@@ -253,28 +253,43 @@ class DeepArController {
   Future<void> fireTrigger({required String trigger}) async {
     await platformRun(
         androidFunction: () => _deepArPlatformHandler.fireTrigger(trigger),
-        iOSFunction: () => _deepArPlatformHandler.fireTriggerIos(_textureId!, trigger));
+        iOSFunction: () =>
+            _deepArPlatformHandler.fireTriggerIos(_textureId!, trigger));
   }
 
   ///Display debugging stats on screen.
   Future<void> showStats({required bool enabled}) async {
     await platformRun(
         androidFunction: () => _deepArPlatformHandler.showStats(enabled),
-        iOSFunction: () => _deepArPlatformHandler.showStatsIos(_textureId!, enabled));
+        iOSFunction: () =>
+            _deepArPlatformHandler.showStatsIos(_textureId!, enabled));
   }
 
   ///Enable or disable global physics simulation.
   Future<void> simulatePhysics({required bool enabled}) async {
     await platformRun(
         androidFunction: () => _deepArPlatformHandler.simulatePhysics(enabled),
-        iOSFunction: () => _deepArPlatformHandler.simulatePhysicsIos(_textureId!, enabled));
+        iOSFunction: () =>
+            _deepArPlatformHandler.simulatePhysicsIos(_textureId!, enabled));
   }
 
   ///Display physics colliders preview on screen.
   Future<void> showColliders({required bool enabled}) async {
     await platformRun(
         androidFunction: () => _deepArPlatformHandler.showColliders(enabled),
-        iOSFunction: () => _deepArPlatformHandler.showCollidersIos(_textureId!, enabled));
+        iOSFunction: () =>
+            _deepArPlatformHandler.showCollidersIos(_textureId!, enabled));
+  }
+
+  ///Moves the selected game object from its current position in a tree and sets it as a direct child of a target game object.
+  Future<void> moveGameObject(
+      {required String selectedGameObjectName,
+      required String targetGameObjectName}) async {
+    await platformRun(
+        androidFunction: () => _deepArPlatformHandler.moveGameObject(
+            selectedGameObjectName, targetGameObjectName),
+        iOSFunction: () => _deepArPlatformHandler.moveGameObjectIos(
+            _textureId!, selectedGameObjectName, targetGameObjectName));
   }
 
   ///Releases all resources required by DeepAR.
