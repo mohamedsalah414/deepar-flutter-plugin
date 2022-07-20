@@ -256,6 +256,13 @@ class DeepArController {
         iOSFunction: () => _deepArPlatformHandler.fireTriggerIos(_textureId!, trigger));
   }
 
+  ///Display debugging stats on screen.
+  Future<void> showStats({required bool enabled}) async {
+    await platformRun(
+        androidFunction: () => _deepArPlatformHandler.showStats(enabled),
+        iOSFunction: () => _deepArPlatformHandler.showStatsIos(_textureId!, enabled));
+  }
+
   ///Releases all resources required by DeepAR.
   Future<void> destroy() async {
     await platformRun(

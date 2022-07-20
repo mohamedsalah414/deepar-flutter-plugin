@@ -280,4 +280,13 @@ class DeepArPlatformHandler {
     return _avCameraChannel(view)
         .invokeMethod("fireTrigger", {"trigger": trigger});
   }
+
+  Future<void> showStats(bool enabled) {
+    return _channel.invokeMethod("showStats", {"enabled": enabled});
+  }
+
+  Future<void> showStatsIos(int view, bool enabled) {
+    return _avCameraChannel(view)
+        .invokeMethod("showStats", {"enabled": enabled});
+  }
 }

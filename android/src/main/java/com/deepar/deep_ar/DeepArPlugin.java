@@ -178,6 +178,10 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                 String trigger = ((String) arguments.get("trigger"));
                 deepAR.fireTrigger(trigger);
                 break;
+            case "showStats":
+                boolean enabled = ((boolean) arguments.get("enabled"));
+                deepAR.showStats(enabled);
+                break;
             case "destroy":
                 deepAR.release();
                 break;

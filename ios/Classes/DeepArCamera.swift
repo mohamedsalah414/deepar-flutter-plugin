@@ -150,6 +150,9 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         case "fireTrigger":
             let trigger:String = args?["trigger"] as! String
             deepAR.fireTrigger(trigger)
+        case "showStats":
+            let enabled:Bool = args?["enabled"] as! Bool
+            deepAR.showStats(enabled)
         case "destroy":
             deepAR.shutdown()
             result("SHUTDOWN");
