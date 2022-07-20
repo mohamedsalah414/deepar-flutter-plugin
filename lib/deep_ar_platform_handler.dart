@@ -238,11 +238,13 @@ class DeepArPlatformHandler {
         false;
   }
 
-  Future<void> onDestroy() {
+  Future<void> destroy() {
     return _channel.invokeMethod<bool>("destroy");
   }
 
-  Future<void> onDestroyIos(int view) {
+  Future<void> destroyIos(int view) {
     return _avCameraChannel(view).invokeMethod<bool>("destroy");
   }
+
+
 }

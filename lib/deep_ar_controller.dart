@@ -236,11 +236,11 @@ class DeepArController {
     return _flashState;
   }
 
-  ///Destroy objects and free up memory
-  Future<void> onDestroy() async {
+  ///Releases all resources required by DeepAR.
+  Future<void> destroy() async {
     await platformRun(
-        androidFunction: _deepArPlatformHandler.onDestroy,
-        iOSFunction: () => _deepArPlatformHandler.onDestroyIos(_textureId!));
+        androidFunction: _deepArPlatformHandler.destroy,
+        iOSFunction: () => _deepArPlatformHandler.destroyIos(_textureId!));
   }
 
   Future<bool> _askMediaPermission() async {
