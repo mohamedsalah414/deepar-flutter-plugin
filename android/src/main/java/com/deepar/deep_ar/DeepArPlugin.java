@@ -89,6 +89,7 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
 
     private void handleMethods(MethodCall call, Result result) {
         Map<String, Object> arguments = (Map<String, Object>) call.arguments;
+        boolean enabled = false;
 
         switch (call.method) {
             case MethodStrings.initialize: // Initialize
@@ -179,12 +180,12 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                 deepAR.fireTrigger(trigger);
                 break;
             case "showStats":
-                boolean enabled = ((boolean) arguments.get("enabled"));
+                enabled = ((boolean) arguments.get("enabled"));
                 deepAR.showStats(enabled);
                 break;
             case "simulatePhysics":
-                boolean isSimulation = ((boolean) arguments.get("enabled"));
-                deepAR.simulatePhysics(isSimulation);
+                enabled = ((boolean) arguments.get("enabled"));
+                deepAR.simulatePhysics(enabled);
                 break;
             case "destroy":
                 deepAR.release();
