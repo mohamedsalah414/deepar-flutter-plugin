@@ -263,6 +263,12 @@ class DeepArController {
         iOSFunction: () => _deepArPlatformHandler.showStatsIos(_textureId!, enabled));
   }
 
+  Future<void> simulatePhysics({required bool enabled}) async {
+    await platformRun(
+        androidFunction: () => _deepArPlatformHandler.simulatePhysics(enabled),
+        iOSFunction: () => _deepArPlatformHandler.simulatePhysicsIos(_textureId!, enabled));
+  }
+
   ///Releases all resources required by DeepAR.
   Future<void> destroy() async {
     await platformRun(

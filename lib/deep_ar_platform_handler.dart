@@ -289,4 +289,13 @@ class DeepArPlatformHandler {
     return _avCameraChannel(view)
         .invokeMethod("showStats", {"enabled": enabled});
   }
+
+  Future<void> simulatePhysics(bool enabled) {
+    return _channel.invokeMethod("simulatePhysics", {"enabled": enabled});
+  }
+
+  Future<void> simulatePhysicsIos(int view, bool enabled) {
+    return _avCameraChannel(view)
+        .invokeMethod("simulatePhysics", {"enabled": enabled});
+  }
 }
