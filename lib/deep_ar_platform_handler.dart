@@ -247,7 +247,10 @@ class DeepArPlatformHandler {
   }
 
   Future<void> switchEffectWithSlot(
-      {required String slot, required String path, String targetGameObject = '', int face = 0}) {
+      {required String slot,
+      required String path,
+      String targetGameObject = '',
+      int face = 0}) {
     return _channel.invokeMethod("switchEffectWithSlot", {
       "slot": slot,
       "path": path,
@@ -257,12 +260,24 @@ class DeepArPlatformHandler {
   }
 
   Future<void> switchEffectWithSlotIos(int view,
-      {required String slot, required String path, String targetGameObject = '', int face = 0}) {
+      {required String slot,
+      required String path,
+      String targetGameObject = '',
+      int face = 0}) {
     return _avCameraChannel(view).invokeMethod("switchEffectWithSlot", {
       "slot": slot,
       "path": path,
       "face": face,
       "targetGameObject": targetGameObject,
     });
+  }
+
+  Future<void> fireTrigger(String trigger) {
+    return _channel.invokeMethod("fireTrigger", {"trigger": trigger});
+  }
+
+  Future<void> fireTriggerIos(int view, String trigger) {
+    return _avCameraChannel(view)
+        .invokeMethod("fireTrigger", {"trigger": trigger});
   }
 }

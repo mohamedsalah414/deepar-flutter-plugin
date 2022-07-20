@@ -174,6 +174,10 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                     deepAR.switchEffect(slot, path, face);
                 }
                 break;
+            case "fireTrigger":
+                String trigger = ((String) arguments.get("trigger"));
+                deepAR.fireTrigger(trigger);
+                break;
             case "destroy":
                 deepAR.release();
                 break;

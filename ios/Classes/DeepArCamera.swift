@@ -147,6 +147,9 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         case "toggle_flash":
             let isFlash:Bool = toggleFlash()
             result(isFlash);
+        case "fireTrigger":
+            let trigger:String = args?["trigger"] as! String
+            deepAR.fireTrigger(trigger)
         case "destroy":
             deepAR.shutdown()
             result("SHUTDOWN");

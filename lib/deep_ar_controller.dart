@@ -249,6 +249,13 @@ class DeepArController {
     return _flashState;
   }
 
+  ///Fire named trigger of an fbx animation set on the currently loaded effect.
+  Future<void> fireTrigger({required String trigger}) async {
+    await platformRun(
+        androidFunction: () => _deepArPlatformHandler.fireTrigger(trigger),
+        iOSFunction: () => _deepArPlatformHandler.fireTriggerIos(_textureId!, trigger));
+  }
+
   ///Releases all resources required by DeepAR.
   Future<void> destroy() async {
     await platformRun(
