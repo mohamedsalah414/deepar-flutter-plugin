@@ -5,6 +5,7 @@ import 'package:deep_ar/resolution_preset.dart';
 import 'package:deep_ar/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:vector_math/vector_math_64.dart' as vector;
 
 import 'package:permission_handler/permission_handler.dart';
 
@@ -290,6 +291,50 @@ class DeepArController {
             selectedGameObjectName, targetGameObjectName),
         iOSFunction: () => _deepArPlatformHandler.moveGameObjectIos(
             _textureId!, selectedGameObjectName, targetGameObjectName));
+  }
+
+  ///Changes a node or component newParameter.
+  ///
+  /// Only allowed datatype for newParameter are :
+  /// String, Bool, Vector3, Vector4, Float
+  Future<void> changeParameter({
+    required String gameObject,
+    required String component,
+    required String parameter,
+    dynamic newParameter,
+  }) async {
+    if (newParameter is String ||
+        newParameter is bool ||
+        newParameter is vector.Vector3 ||
+        newParameter is vector.Vector4 ||
+        newParameter is double) {
+      Map<String, dynamic> arguments = {};
+      arguments['gameObject'] = gameObject;
+      arguments['component'] = component;
+      arguments['parameter'] = parameter;
+
+      if (newParameter is vector.Vector3) {
+        arguments['x'] = newParameter.x;
+        arguments['y'] = newParameter.y;
+        arguments['z'] = newParameter.z;
+      } else if (newParameter is vector.Vector4) {
+        arguments['x'] = newParameter.x;
+        arguments['y'] = newParameter.y;
+        arguments['z'] = newParameter.z;
+        arguments['w'] = newParameter.w;
+      } else {
+        arguments['newParameter'] = newParameter;
+      }
+
+      await platformRun(
+          androidFunction: () =>
+              _deepArPlatformHandler.changeParameter(arguments),
+          iOSFunction: () => _deepArPlatformHandler.changeParameterIos(
+              _textureId!, arguments));
+    } else {
+      debugPrint("Invalid datatype passed in newParameter");
+      throw ("Invalid field newParameter. Please refer docs to pass correct value.");
+    }
   }
 
   ///Releases all resources required by DeepAR.

@@ -163,6 +163,37 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
             let selectedGameObjectName:String = args?["selectedGameObjectName"] as! String
             let targetGameObjectName:String = args?["targetGameObjectName"] as! String
             deepAR.moveGameObject(selectedGameObjectName, targetGameObjectname: targetGameObjectName)
+        case "changeParameter":
+            let gameObject:String = args?["gameObject"] as! String
+            let component:String = args?["component"] as! String
+            let parameter:String = args?["parameter"] as! String
+            let newParameter = args?["newParameter"]
+            
+            if newParameter == nil  {
+                let x = Float(args?["x"] as! Double)
+                let y = Float(args?["y"] as! Double)
+                let z = Float(args?["z"] as! Double)
+                let w = args?["w"]
+                
+                if w == nil {
+                    let vector3:Vector3 = Vector3(x: x , y: y, z: z)
+                    deepAR.changeParameter(gameObject, component: component, parameter: parameter, vector3Value: vector3 )
+                }else{
+                    let vector4:Vector4 = Vector4(x: x , y: y, z: z, w: Float(w as! Double) )
+                    deepAR.changeParameter(gameObject, component: component, parameter: parameter, vectorValue: vector4 )
+                }
+                
+            }
+            else if newParameter is Bool {
+                deepAR.changeParameter(gameObject, component: component, parameter: parameter, boolValue: newParameter as! Bool )
+            }
+            else if newParameter is Double {
+                deepAR.changeParameter(gameObject, component: component, parameter: parameter, floatValue: Float(newParameter as! Double))
+            }
+            else if newParameter is String {
+                deepAR.changeParameter(gameObject, component: component, parameter: parameter, stringValue: newParameter as? String)
+            }
+            
         case "destroy":
             deepAR.shutdown()
             result("SHUTDOWN");

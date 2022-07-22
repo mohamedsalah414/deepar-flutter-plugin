@@ -196,6 +196,34 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                 String targetGameObjectName = ((String) arguments.get("targetGameObjectName"));
                 deepAR.moveGameObject(selectedGameObjectName, targetGameObjectName);
                 break;
+
+            case "changeParameter":
+                String gameObject = ((String) arguments.get("gameObject"));
+                String component = ((String) arguments.get("component"));
+                String parameter = ((String) arguments.get("parameter"));
+                Object newParameter = arguments.get("newParameter");
+
+                if (newParameter == null){
+
+                    float x = ((Double) arguments.get("x")).floatValue();
+                    float y = ((Double) arguments.get("y")).floatValue();
+                    float z = ((Double) arguments.get("z")).floatValue();
+                    Object w = arguments.get("w");
+
+                    if (w == null){
+                        deepAR.changeParameterVec3(gameObject, component, parameter, x, y, z);
+                    }else{
+                        float floatValueW = ((Double) w).floatValue();
+                        deepAR.changeParameterVec4(gameObject, component, parameter, x, y, z, floatValueW);
+                    }
+                }
+                else if (newParameter instanceof Boolean){
+                    deepAR.changeParameterBool(gameObject, component, parameter, (Boolean) newParameter);
+                }
+                else if (newParameter instanceof Double){
+                    deepAR.changeParameterFloat(gameObject, component, parameter, ((Double) newParameter).floatValue());
+                }
+                break;
             case "destroy":
                 deepAR.release();
                 break;

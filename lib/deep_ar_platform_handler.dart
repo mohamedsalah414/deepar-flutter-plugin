@@ -316,11 +316,19 @@ class DeepArPlatformHandler {
     });
   }
 
-  Future<void> moveGameObjectIos(int view, String selectedGameObjectName, String targetGameObjectName) {
-    return _avCameraChannel(view)
-        .invokeMethod("fireTrigger", {
+  Future<void> moveGameObjectIos(
+      int view, String selectedGameObjectName, String targetGameObjectName) {
+    return _avCameraChannel(view).invokeMethod("fireTrigger", {
       "selectedGameObjectName": selectedGameObjectName,
       "targetGameObjectName": targetGameObjectName
     });
+  }
+
+  Future<void> changeParameter(Map<String, dynamic> arguments) {
+    return _channel.invokeMethod("changeParameter", arguments);
+  }
+
+  Future<void> changeParameterIos(int view, Map<String, dynamic> arguments) {
+    return _avCameraChannel(view).invokeMethod("changeParameter", arguments);
   }
 }
