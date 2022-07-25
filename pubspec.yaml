@@ -1,5 +1,5 @@
-name: deep_ar
-description: A new flutter plugin project.
+name: deepar_flutter
+description: Official Flutter SDK for DeepAR 
 version: 0.0.1
 homepage: null
 
@@ -28,7 +28,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.deepar.deep_ar
+        package: com.deepar.ai
         pluginClass: DeepArPlugin
       ios:
         pluginClass: DeepArPlugin

@@ -1,4 +1,4 @@
-package com.deepar.deep_ar;
+package com.deepar.ai;
 
 import android.app.Activity;
 import android.content.pm.ActivityInfo;

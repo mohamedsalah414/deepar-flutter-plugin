@@ -1,6 +1,5 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:deep_ar/deep_ar.dart';
 
 void main() {
   const MethodChannel channel = MethodChannel('deep_ar');
