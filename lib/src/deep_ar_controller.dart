@@ -1,13 +1,14 @@
 import 'dart:io';
-import 'package:deepar_flutter/deep_ar_platform_handler.dart';
-import 'package:deepar_flutter/platform_strings.dart';
-import 'package:deepar_flutter/resolution_preset.dart';
-import 'package:deepar_flutter/utils.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-
 import 'package:permission_handler/permission_handler.dart';
 
+import 'resolution_preset.dart';
+import 'deep_ar_platform_handler.dart';
+import 'platform_strings.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'utils.dart';
+
+/// Controls all interaction with DeepAR Sdk.
 class DeepArController {
   late final DeepArPlatformHandler _deepArPlatformHandler;
   late final Resolution _resolution;
@@ -26,15 +27,15 @@ class DeepArController {
     _deepArPlatformHandler = DeepArPlatformHandler();
   }
 
-  ///Return true if the camera preview is intialized
+  ///Return true if the camera preview is initialized
   ///
   ///For [iOS], please call the function after [DeepArPreview] widget has been built.
   bool get isInitialized => _textureId != null;
 
   ///If the user has allowed required camera permissions
-  bool get hasPermisssion => _hasPermission;
+  bool get hasPermission => _hasPermission;
 
-  ///Aspect ratio of the preivew image
+  ///Aspect ratio of the preview image
   ///
   ///For [iOS], please call the function after [DeepArPreview] widget has been built.
   double get aspectRatio => _aspectRatio ?? 1.0;
@@ -57,7 +58,7 @@ class DeepArController {
   bool get flashState => _flashState;
 
   ///Initializes the DeepAR SDK with license keys and asks for required camera and microphone permissions.
-  ///Returns false if fails to initalize;
+  ///Returns false if fails to initialize.
   ///
   ///[androidLicenseKey] and [iosLicenseKey] both cannot be null together.
   ///
@@ -98,7 +99,7 @@ class DeepArController {
     return false;
   }
 
-  ///Builds and returns the DeepAR Camera Widget.
+  ///Builds and returns the DeepAR Camera Preview.
   ///
   ///[oniOSViewCreated] callback to update [imageDimensions] and [aspectRatio] after iOS
   ///widget is built
@@ -149,7 +150,7 @@ class DeepArController {
     }
   }
 
-  ///Switch DeepAR with the passed [effect] path fromfresol assets
+  ///Switch DeepAR with the passed [effect] path from assets
   Future<String?> switchEffect(String? effect) {
     return platformRun(
         androidFunction: () =>
@@ -158,7 +159,7 @@ class DeepArController {
             _deepArPlatformHandler.switchCameraIos(effect, _textureId!));
   }
 
-  ///Switch DeepAR with the passed [mask] path fromfresol assets
+  ///Switch DeepAR with the passed [mask] path from assets
   Future<String?> switchFaceMask(String? mask) {
     return platformRun(
         androidFunction: () =>
@@ -176,7 +177,7 @@ class DeepArController {
             _deepArPlatformHandler.switchFilterIos(filter, _textureId!));
   }
 
-  //Starts recording video
+  ///Starts recording video
   Future<void> startVideoRecording() async {
     if (_isRecording) throw ("Recording already in progress");
     if (Platform.isAndroid) {
@@ -188,6 +189,7 @@ class DeepArController {
     }
   }
 
+  ///Stop recording video
   Future<File> stopVideoRecording() async {
     if (!_isRecording) {
       throw ("Invalid stopVideoRecording trigger. No recording was in progress");

@@ -1,3 +1,5 @@
-export 'deep_ar_controller.dart';
-export 'deep_ar_preview.dart';
-export 'resolution_preset.dart';
+library deepar_flutter;
+
+export 'src/deep_ar_controller.dart';
+export 'src/deep_ar_preview.dart';
+export 'src/resolution_preset.dart';
