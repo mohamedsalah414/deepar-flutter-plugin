@@ -1,7 +1,9 @@
 import 'dart:ui';
 
+/// Available resolutions to render.
 enum Resolution { low, medium, high, veryHigh }
 
+/// @nodoc
 extension StringOperators on Resolution {
   String get stringValue {
     return <Resolution, String>{
@@ -13,11 +15,14 @@ extension StringOperators on Resolution {
   }
 }
 
+/// @nodoc
 String enumToString(Resolution o) => o.toString().split('.').last;
 
+/// @nodoc
 Resolution enumFromString<T>(String key) => Resolution.values
     .firstWhere((v) => key == enumToString(v), orElse: () => Resolution.low);
 
+/// @nodoc
 Size iOSImageSizeFromResolution(Resolution resolution) {
   switch (resolution) {
     case Resolution.low:

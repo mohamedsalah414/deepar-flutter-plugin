@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:deepar_flutter/platform_strings.dart';
-import 'package:deepar_flutter/resolution_preset.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import 'resolution_preset.dart';
+import 'platform_strings.dart';
 
 enum VideoResponse { videoStarted, videoCompleted, videoError }
 

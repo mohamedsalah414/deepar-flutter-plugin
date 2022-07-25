@@ -1,8 +1,9 @@
 import 'dart:io';
-
-import 'package:deepar_flutter/deep_ar_controller.dart';
 import 'package:flutter/material.dart';
 
+import 'deep_ar_controller.dart';
+
+/// Displays live preview with desired effects.
 class DeepArPreview extends StatelessWidget {
   const DeepArPreview(this.deepArController, {Key? key}) : super(key: key);
   final DeepArController deepArController;
