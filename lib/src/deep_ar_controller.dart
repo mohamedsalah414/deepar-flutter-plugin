@@ -7,6 +7,7 @@ import 'platform_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'utils.dart';
+import 'package:vector_math/vector_math_64.dart' as vector;
 
 /// Controls all interaction with DeepAR Sdk.
 class DeepArController {
@@ -159,6 +160,20 @@ class DeepArController {
             _deepArPlatformHandler.switchCameraIos(effect, _textureId!));
   }
 
+
+  ///Load contents of a DeepAR Studio file as an effect/filter in the scene
+  Future<void> switchEffectWithSlot(
+      {required String slot,
+      required String path,
+      String? targetGameObject,
+      int? face}) async {
+    await platformRun(
+        androidFunction: () =>
+            _deepArPlatformHandler.switchEffectWithSlot(slot: slot, path: path),
+        iOSFunction: () => _deepArPlatformHandler
+            .switchEffectWithSlotIos(_textureId!, slot: slot, path: path));
+  }
+
   ///Switch DeepAR with the passed [mask] path from assets
   Future<String?> switchFaceMask(String? mask) {
     return platformRun(
@@ -238,11 +253,98 @@ class DeepArController {
     return _flashState;
   }
 
-  ///Destroy objects and free up memory
-  Future<void> onDestroy() async {
+  ///Fire named trigger of an fbx animation set on the currently loaded effect.
+  Future<void> fireTrigger({required String trigger}) async {
     await platformRun(
-        androidFunction: _deepArPlatformHandler.onDestroy,
-        iOSFunction: () => _deepArPlatformHandler.onDestroyIos(_textureId!));
+        androidFunction: () => _deepArPlatformHandler.fireTrigger(trigger),
+        iOSFunction: () =>
+            _deepArPlatformHandler.fireTriggerIos(_textureId!, trigger));
+  }
+
+  ///Display debugging stats on screen.
+  Future<void> showStats({required bool enabled}) async {
+    await platformRun(
+        androidFunction: () => _deepArPlatformHandler.showStats(enabled),
+        iOSFunction: () =>
+            _deepArPlatformHandler.showStatsIos(_textureId!, enabled));
+  }
+
+  ///Enable or disable global physics simulation.
+  Future<void> simulatePhysics({required bool enabled}) async {
+    await platformRun(
+        androidFunction: () => _deepArPlatformHandler.simulatePhysics(enabled),
+        iOSFunction: () =>
+            _deepArPlatformHandler.simulatePhysicsIos(_textureId!, enabled));
+  }
+
+  ///Display physics colliders preview on screen.
+  Future<void> showColliders({required bool enabled}) async {
+    await platformRun(
+        androidFunction: () => _deepArPlatformHandler.showColliders(enabled),
+        iOSFunction: () =>
+            _deepArPlatformHandler.showCollidersIos(_textureId!, enabled));
+  }
+
+  ///Moves the selected game object from its current position in a tree and sets it as a direct child of a target game object.
+  Future<void> moveGameObject(
+      {required String selectedGameObjectName,
+      required String targetGameObjectName}) async {
+    await platformRun(
+        androidFunction: () => _deepArPlatformHandler.moveGameObject(
+            selectedGameObjectName, targetGameObjectName),
+        iOSFunction: () => _deepArPlatformHandler.moveGameObjectIos(
+            _textureId!, selectedGameObjectName, targetGameObjectName));
+  }
+
+  ///Changes a node or component newParameter.
+  ///
+  /// Only allowed datatype for newParameter are :
+  /// String, Bool, Vector3, Vector4, Float
+  Future<void> changeParameter({
+    required String gameObject,
+    required String component,
+    required String parameter,
+    dynamic newParameter,
+  }) async {
+    if (newParameter is String ||
+        newParameter is bool ||
+        newParameter is vector.Vector3 ||
+        newParameter is vector.Vector4 ||
+        newParameter is double) {
+      Map<String, dynamic> arguments = {};
+      arguments['gameObject'] = gameObject;
+      arguments['component'] = component;
+      arguments['parameter'] = parameter;
+
+      if (newParameter is vector.Vector3) {
+        arguments['x'] = newParameter.x;
+        arguments['y'] = newParameter.y;
+        arguments['z'] = newParameter.z;
+      } else if (newParameter is vector.Vector4) {
+        arguments['x'] = newParameter.x;
+        arguments['y'] = newParameter.y;
+        arguments['z'] = newParameter.z;
+        arguments['w'] = newParameter.w;
+      } else {
+        arguments['newParameter'] = newParameter;
+      }
+
+      await platformRun(
+          androidFunction: () =>
+              _deepArPlatformHandler.changeParameter(arguments),
+          iOSFunction: () => _deepArPlatformHandler.changeParameterIos(
+              _textureId!, arguments));
+    } else {
+      debugPrint("Invalid datatype passed in newParameter");
+      throw ("Invalid field newParameter. Please refer docs to pass correct value.");
+    }
+  }
+
+  ///Releases all resources required by DeepAR.
+  Future<void> destroy() async {
+    await platformRun(
+        androidFunction: _deepArPlatformHandler.destroy,
+        iOSFunction: () => _deepArPlatformHandler.destroyIos(_textureId!));
   }
 
   Future<bool> _askMediaPermission() async {

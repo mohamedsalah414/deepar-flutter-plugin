@@ -89,6 +89,7 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
 
     private void handleMethods(MethodCall call, Result result) {
         Map<String, Object> arguments = (Map<String, Object>) call.arguments;
+        boolean enabled = false;
 
         switch (call.method) {
             case MethodStrings.initialize: // Initialize
@@ -162,13 +163,69 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                 String filterName = extractFileName(filter);
                 deepAR.switchEffect("filters", "file:///android_asset/" + filterName);
                 break;
-            case "destroy":
-                if (deepAR == null) {
-                    return;
+            case "switchEffectWithSlot":
+                String slot = ((String) arguments.get("slot"));
+                String path = ((String) arguments.get("path"));
+                int face = ((int) arguments.get("face"));
+                String targetGameObject = ((String) arguments.get("targetGameObject"));
+
+                if (!targetGameObject.isEmpty()){
+                    deepAR.switchEffect(slot, path, face, targetGameObject);
+                }else{
+                    deepAR.switchEffect(slot, path, face);
                 }
-                deepAR.setAREventListener(null);
+                break;
+            case "fireTrigger":
+                String trigger = ((String) arguments.get("trigger"));
+                deepAR.fireTrigger(trigger);
+                break;
+            case "showStats":
+                enabled = ((boolean) arguments.get("enabled"));
+                deepAR.showStats(enabled);
+                break;
+            case "simulatePhysics":
+                enabled = ((boolean) arguments.get("enabled"));
+                deepAR.simulatePhysics(enabled);
+                break;
+            case "showColliders":
+                enabled = ((boolean) arguments.get("enabled"));
+                deepAR.showColliders(enabled);
+                break;
+            case "moveGameObject":
+                String selectedGameObjectName = ((String) arguments.get("selectedGameObjectName"));
+                String targetGameObjectName = ((String) arguments.get("targetGameObjectName"));
+                deepAR.moveGameObject(selectedGameObjectName, targetGameObjectName);
+                break;
+
+            case "changeParameter":
+                String gameObject = ((String) arguments.get("gameObject"));
+                String component = ((String) arguments.get("component"));
+                String parameter = ((String) arguments.get("parameter"));
+                Object newParameter = arguments.get("newParameter");
+
+                if (newParameter == null){
+
+                    float x = ((Double) arguments.get("x")).floatValue();
+                    float y = ((Double) arguments.get("y")).floatValue();
+                    float z = ((Double) arguments.get("z")).floatValue();
+                    Object w = arguments.get("w");
+
+                    if (w == null){
+                        deepAR.changeParameterVec3(gameObject, component, parameter, x, y, z);
+                    }else{
+                        float floatValueW = ((Double) w).floatValue();
+                        deepAR.changeParameterVec4(gameObject, component, parameter, x, y, z, floatValueW);
+                    }
+                }
+                else if (newParameter instanceof Boolean){
+                    deepAR.changeParameterBool(gameObject, component, parameter, (Boolean) newParameter);
+                }
+                else if (newParameter instanceof Double){
+                    deepAR.changeParameterFloat(gameObject, component, parameter, ((Double) newParameter).floatValue());
+                }
+                break;
+            case "destroy":
                 deepAR.release();
-                deepAR = null;
                 break;
         }
 

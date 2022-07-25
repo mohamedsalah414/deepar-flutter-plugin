@@ -8,6 +8,14 @@ import DeepAR
 import Foundation
 import AVKit
 
+extension String {
+    static func isNilOrEmpty(string: String?) -> Bool {
+        guard let value = string else { return true }
+        
+        return value.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+}
+
 enum PictureQuality: String {
     case low   = "low"
     case medium   = "medium"
@@ -108,6 +116,20 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
             let path = Bundle.main.path(forResource: key, ofType: nil)
             deepAR.switchEffect(withSlot: "filters", path: path)
             
+        case "switchEffectWithSlot":
+            let slot:String = args?["slot"] as! String
+            let path:String = args?["path"] as! String
+            let face = args?["face"] as! Int
+            let targetGameObject = args?["targetGameObject"] as? String
+            let isGameTargetEmpty = String.isNilOrEmpty(string: targetGameObject)
+            
+            if !isGameTargetEmpty {
+                deepAR.switchEffect(withSlot: slot, path: path, face: face, targetGameObject: targetGameObject)
+            }else{
+                deepAR.switchEffect(withSlot: slot, path: path, face: face)
+            }
+            
+            
         case "start_recording_video":
             startRecordingVideo();
             result("STARTING_TO_RECORD");
@@ -125,8 +147,56 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         case "toggle_flash":
             let isFlash:Bool = toggleFlash()
             result(isFlash);
+        case "fireTrigger":
+            let trigger:String = args?["trigger"] as! String
+            deepAR.fireTrigger(trigger)
+        case "showStats":
+            let enabled:Bool = args?["enabled"] as! Bool
+            deepAR.showStats(enabled)
+        case "simulatePhysics":
+            let enabled:Bool = args?["enabled"] as! Bool
+            deepAR.simulatePhysics(enabled)
+        case "showColliders":
+            let enabled:Bool = args?["enabled"] as! Bool
+            deepAR.showColliders(enabled)
+        case "moveGameObject":
+            let selectedGameObjectName:String = args?["selectedGameObjectName"] as! String
+            let targetGameObjectName:String = args?["targetGameObjectName"] as! String
+            deepAR.moveGameObject(selectedGameObjectName, targetGameObjectname: targetGameObjectName)
+        case "changeParameter":
+            let gameObject:String = args?["gameObject"] as! String
+            let component:String = args?["component"] as! String
+            let parameter:String = args?["parameter"] as! String
+            let newParameter = args?["newParameter"]
+            
+            if newParameter == nil  {
+                let x = Float(args?["x"] as! Double)
+                let y = Float(args?["y"] as! Double)
+                let z = Float(args?["z"] as! Double)
+                let w = args?["w"]
+                
+                if w == nil {
+                    let vector3:Vector3 = Vector3(x: x , y: y, z: z)
+                    deepAR.changeParameter(gameObject, component: component, parameter: parameter, vector3Value: vector3 )
+                }else{
+                    let vector4:Vector4 = Vector4(x: x , y: y, z: z, w: Float(w as! Double) )
+                    deepAR.changeParameter(gameObject, component: component, parameter: parameter, vectorValue: vector4 )
+                }
+                
+            }
+            else if newParameter is Bool {
+                deepAR.changeParameter(gameObject, component: component, parameter: parameter, boolValue: newParameter as! Bool )
+            }
+            else if newParameter is Double {
+                deepAR.changeParameter(gameObject, component: component, parameter: parameter, floatValue: Float(newParameter as! Double))
+            }
+            else if newParameter is String {
+                deepAR.changeParameter(gameObject, component: component, parameter: parameter, stringValue: newParameter as? String)
+            }
+            
         case "destroy":
             deepAR.shutdown()
+            result("SHUTDOWN");
         default:
             result("No platform method found")
         }
@@ -223,7 +293,7 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
     func didFinishVideoRecording(_ videoFilePath: String!) {
         
         NSLog("didFinishVideoRecording!!!!!")
-        self.videoFilePath = videoFilePath        
+        self.videoFilePath = videoFilePath
         videoResult(callerResponse: DeepArResponse.videoCompleted, message: "video completed")
     }
     
@@ -231,10 +301,10 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         if let data = screenshot.pngData() {
             
             let filename = FileManager.default.urls(for: .documentDirectory, in:.userDomainMask)[0] .appendingPathComponent(String(NSDate().timeIntervalSince1970).replacingOccurrences(of: ".", with: "-") + ".png")
-               try? data.write(to: filename)
+            try? data.write(to: filename)
             screenshotFilePath = filename.path;
             screenshotResult(callerResponse: DeepArResponse.screenshotTaken, message: "Screenshot_taken")
-           }
+        }
         
     }
     

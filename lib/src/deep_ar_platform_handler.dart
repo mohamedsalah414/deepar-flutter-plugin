@@ -239,11 +239,97 @@ class DeepArPlatformHandler {
         false;
   }
 
-  Future<void> onDestroy() {
+  Future<void> destroy() {
     return _channel.invokeMethod<bool>("destroy");
   }
 
-  Future<void> onDestroyIos(int view) {
+  Future<void> destroyIos(int view) {
     return _avCameraChannel(view).invokeMethod<bool>("destroy");
+  }
+
+  Future<void> switchEffectWithSlot(
+      {required String slot,
+      required String path,
+      String targetGameObject = '',
+      int face = 0}) {
+    return _channel.invokeMethod("switchEffectWithSlot", {
+      "slot": slot,
+      "path": path,
+      "face": face,
+      "targetGameObject": targetGameObject,
+    });
+  }
+
+  Future<void> switchEffectWithSlotIos(int view,
+      {required String slot,
+      required String path,
+      String targetGameObject = '',
+      int face = 0}) {
+    return _avCameraChannel(view).invokeMethod("switchEffectWithSlot", {
+      "slot": slot,
+      "path": path,
+      "face": face,
+      "targetGameObject": targetGameObject,
+    });
+  }
+
+  Future<void> fireTrigger(String trigger) {
+    return _channel.invokeMethod("fireTrigger", {"trigger": trigger});
+  }
+
+  Future<void> fireTriggerIos(int view, String trigger) {
+    return _avCameraChannel(view)
+        .invokeMethod("fireTrigger", {"trigger": trigger});
+  }
+
+  Future<void> showStats(bool enabled) {
+    return _channel.invokeMethod("showStats", {"enabled": enabled});
+  }
+
+  Future<void> showStatsIos(int view, bool enabled) {
+    return _avCameraChannel(view)
+        .invokeMethod("showStats", {"enabled": enabled});
+  }
+
+  Future<void> simulatePhysics(bool enabled) {
+    return _channel.invokeMethod("simulatePhysics", {"enabled": enabled});
+  }
+
+  Future<void> simulatePhysicsIos(int view, bool enabled) {
+    return _avCameraChannel(view)
+        .invokeMethod("simulatePhysics", {"enabled": enabled});
+  }
+
+  Future<void> showColliders(bool enabled) {
+    return _channel.invokeMethod("showColliders", {"enabled": enabled});
+  }
+
+  Future<void> showCollidersIos(int view, bool enabled) {
+    return _avCameraChannel(view)
+        .invokeMethod("showColliders", {"enabled": enabled});
+  }
+
+  Future<void> moveGameObject(
+      String selectedGameObjectName, String targetGameObjectName) {
+    return _channel.invokeMethod("fireTrigger", {
+      "selectedGameObjectName": selectedGameObjectName,
+      "targetGameObjectName": targetGameObjectName
+    });
+  }
+
+  Future<void> moveGameObjectIos(
+      int view, String selectedGameObjectName, String targetGameObjectName) {
+    return _avCameraChannel(view).invokeMethod("fireTrigger", {
+      "selectedGameObjectName": selectedGameObjectName,
+      "targetGameObjectName": targetGameObjectName
+    });
+  }
+
+  Future<void> changeParameter(Map<String, dynamic> arguments) {
+    return _channel.invokeMethod("changeParameter", arguments);
+  }
+
+  Future<void> changeParameterIos(int view, Map<String, dynamic> arguments) {
+    return _avCameraChannel(view).invokeMethod("changeParameter", arguments);
   }
 }
