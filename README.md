@@ -1,19 +1,19 @@
-This plugin is the official SDK for [DeepAR](http://deepar.ai). Platforms supported: android & iOS. 
+This plugin is the official SDK for [DeepAR](http://deepar.ai). Platforms supported: Android & iOS. 
 
 The current version of plugin supports: 
-✅ Live AR previews 
-✅ Take screenshots
-✅ Record Videos
-✅ Flip camera
-✅ Toggle Flash
+- Live AR previews ✅ 
+- Take screenshots ✅ 
+- Record Videos ✅ 
+- Flip camera ✅ 
+- Toggle Flash ✅ 
 
 | Support |Android  | iOS|
 |--|--|--|
-|  |SDK 21+  |iOS 13.0+|
+|  |SDK 21+  |  iOS 13.0+|
 
 
 ## Installation
-Please visit our [developer website](https://developer.deepar.ai) to create a project and generate your separate licence keys for both platforms. 
+Please visit our [developer website](https://developer.deepar.ai) to create a project and generate your separate license keys for both platforms. 
 
 Once done, please add the latest `deepar` dependency to your pubspec.yaml. 
 
@@ -72,7 +72,7 @@ end
 
 **Flutter:**
 
-1. Initialise  `DeepArController` by passing in your license keys for both platforms.
+1. Initialize  `DeepArController` by passing in your license keys for both platforms.
 ```
 final  DeepArController _controller = DeepArController();
 _controller.initialize(
