@@ -5,13 +5,13 @@
 Pod::Spec.new do |s|
   s.name             = 'deepar_flutter'
   s.version          = '0.0.1'
-  s.summary          = 'A new flutter plugin project.'
+  s.summary          = 'Offical Flutter SDK for DeepAR Plugin.'
   s.description      = <<-DESC
-A new flutter plugin project.
+Official Flutter SDK for DeepAR Plugin.
                        DESC
-  s.homepage         = 'http://example.com'
+  s.homepage         = 'http://deepar.ai'
   s.license          = { :file => '../LICENSE' }
-  s.author           = { 'Your Company' => 'email@example.com' }
+  s.author           = { 'Company' => 'example@example.com' }
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
   s.resources    = ['Assets/**.*']
