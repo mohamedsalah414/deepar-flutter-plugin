@@ -1,8 +1,8 @@
 import 'dart:io';
-import 'package:deep_ar/deep_ar_platform_handler.dart';
-import 'package:deep_ar/platform_strings.dart';
-import 'package:deep_ar/resolution_preset.dart';
-import 'package:deep_ar/utils.dart';
+import 'package:deepar_flutter/deep_ar_platform_handler.dart';
+import 'package:deepar_flutter/platform_strings.dart';
+import 'package:deepar_flutter/resolution_preset.dart';
+import 'package:deepar_flutter/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;

@@ -1,4 +1,4 @@
-group 'com.deepar.deep_ar'
+group 'com.deepar.ai'
 version '1.0'
 
 buildscript {

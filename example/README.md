@@ -1,6 +1,6 @@
-# deep_ar_example
+# deepar_example
 
-Demonstrates how to use the deep_ar plugin.
+Demonstrates how to use the deepar plugin.
 
 ## Getting Started
 

@@ -1,5 +1,5 @@
-name: deep_ar_example
-description: Demonstrates how to use the deep_ar plugin.
+name: deepar_flutter_example
+description: Demonstrates how to use the deepar plugin.
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -16,7 +16,7 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   cupertino_icons: ^1.0.2
-  deep_ar:
+  deepar_flutter:
     path: ../
   flutter:
     sdk: flutter

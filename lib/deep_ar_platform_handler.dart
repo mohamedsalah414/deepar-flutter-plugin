@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:deep_ar/platform_strings.dart';
-import 'package:deep_ar/resolution_preset.dart';
+import 'package:deepar_flutter/platform_strings.dart';
+import 'package:deepar_flutter/resolution_preset.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 

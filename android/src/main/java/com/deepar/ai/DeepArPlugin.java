@@ -1,4 +1,4 @@
-package com.deepar.deep_ar;
+package com.deepar.ai;
 
 import androidx.annotation.NonNull;
 import android.app.Activity;
@@ -44,7 +44,7 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
     /// when the Flutter Engine is detached from the Activity
     private MethodChannel cameraXChannel, channel;
 
-    private final String TAG = "DEEP_AR_LOGS";
+    private final String TAG = "DEEPAR_LOGS";
     private Activity activity;
     private DeepAR deepAR;
     private Surface surface;
@@ -122,7 +122,7 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
 
             case MethodStrings.startRecordingVideo:
                 try {
-                    File file = File.createTempFile("deep_ar_", ".mp4");
+                    File file = File.createTempFile("deepar_", ".mp4");
                     videoFilePath = file.getPath();
                     deepAR.startVideoRecording(videoFilePath);
                 
@@ -343,7 +343,7 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
 
     @Override
     public void initialized() {
-        Log.d(TAG, "initialized : DEEP_AR");
+        Log.d(TAG, "initialized : DEEPAR");
     }
 
     @Override

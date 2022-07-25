@@ -1,6 +1,6 @@
 //
 //  DeepArCamera.swift
-//  deep_ar
+//  deepar_flutter
 //
 //  Created by Samyak Jain on 14/07/22.
 //

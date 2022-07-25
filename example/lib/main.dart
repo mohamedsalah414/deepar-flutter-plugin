@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:deep_ar/deep_ar.dart';
+import 'package:deepar_flutter/deep_ar.dart';
 import 'dart:convert';
 
 import 'package:open_file/open_file.dart';
@@ -64,10 +64,8 @@ class _HomeState extends State<Home> {
     _controller = DeepArController();
     _controller
         .initialize(
-          androidLicenseKey:
-              "---android key---",
-          iosLicenseKey:
-              "---iOS key---",
+          androidLicenseKey: "---android key---",
+          iosLicenseKey: "---iOS key---",
           resolution: Resolution.high,
         )
         .then((value) => setState(() {}));
