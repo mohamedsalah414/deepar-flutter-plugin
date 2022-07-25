@@ -1,4 +1,4 @@
-package com.deepar.deep_ar_example;
+package com.deepar.ai_example;
 
 import io.flutter.embedding.android.FlutterActivity;
 

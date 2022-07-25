@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:deep_ar/deep_ar_controller.dart';
+import 'package:deepar_flutter/deep_ar_controller.dart';
 import 'package:flutter/material.dart';
 
 class DeepArPreview extends StatelessWidget {

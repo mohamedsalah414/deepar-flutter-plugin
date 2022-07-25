@@ -1,4 +1,4 @@
-package com.deepar.deep_ar;
+package com.deepar.ai;
 
 public  class MethodStrings {
 

@@ -1,8 +1,6 @@
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:deep_ar/resolution_preset.dart';
-
 T platformRun<T>(
     {required T Function() androidFunction,
     required T Function() iOSFunction}) {
