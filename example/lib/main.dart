@@ -81,7 +81,7 @@ class _HomeState extends State<Home> {
   @override
   void dispose() {
     if (_controller.isInitialized) {
-      _controller.onDestroy();
+      _controller.destroy();
     }
     super.dispose();
   }
