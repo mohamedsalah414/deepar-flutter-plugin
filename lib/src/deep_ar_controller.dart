@@ -44,6 +44,9 @@ class DeepArController {
   ///Return true if the recording is in progress.
   bool get isRecording => _isRecording;
 
+  ///Get current flash state as [FlashState.on] or [FlashState.off]
+  bool get flashState => _flashState;
+
   ///Size of the preview image
   ///
   ///For [iOS], please call the function after [DeepArPreview] widget has been built.
@@ -54,9 +57,6 @@ class DeepArController {
 
   ///Get current  camera direction as [CameraDirection.front] or [CameraDirection.rear]
   CameraDirection get cameraDirection => _cameraDirection;
-
-  ///Get current flash state as [FlashState.on] or [FlashState.off]
-  bool get flashState => _flashState;
 
   ///Initializes the DeepAR SDK with license keys and asks for required camera and microphone permissions.
   ///Returns false if fails to initialize.
@@ -140,15 +140,42 @@ class DeepArController {
     }
   }
 
-  ///Listen to native delegate methods
-  void _setNativeListenerIos() {
-    try {
-      _deepArPlatformHandler.setListenerIos(_textureId!);
-    } catch (e) {
-      debugPrint(
-          "Exception while setting iOS response listener, won't be able to notify flutter once files are available");
-      debugPrint("Error $e");
+  ///Starts recording video
+  Future<void> startVideoRecording() async {
+    if (_isRecording) throw ("Recording already in progress");
+    if (Platform.isAndroid) {
+      _deepArPlatformHandler.startRecordingVideoAndroid();
+      _isRecording = true;
+    } else {
+      _deepArPlatformHandler.startRecordingVideoIos(_textureId!);
+      _isRecording = true;
     }
+  }
+
+  ///Stop recording video
+  Future<File> stopVideoRecording() async {
+    if (!_isRecording) {
+      throw ("Invalid stopVideoRecording trigger. No recording was in progress");
+    }
+    final _file = await platformRun(
+        androidFunction: _deepArPlatformHandler.stopRecordingVideoAndroid,
+        iOSFunction: () =>
+            _deepArPlatformHandler.stopRecordingVideoIos(_textureId!));
+    _isRecording = false;
+    if (_file == "ENDED_WITH_ERROR") throw ("Video capture failed");
+
+    return File(_file!);
+  }
+
+  ///Takes picture of the current frame and returns a [File]
+  Future<File> takeScreenshot() async {
+    final _file = await platformRun(
+        androidFunction: _deepArPlatformHandler.takeScreenShot,
+        iOSFunction: () =>
+            _deepArPlatformHandler.takeScreenShotIos(_textureId!));
+    if (_file == "ENDED_WITH_ERROR") throw ("Video capture failed");
+
+    return File(_file!);
   }
 
   ///Switch DeepAR with the passed [effect] path from assets
@@ -159,7 +186,6 @@ class DeepArController {
         iOSFunction: () =>
             _deepArPlatformHandler.switchCameraIos(effect, _textureId!));
   }
-
 
   ///Load contents of a DeepAR Studio file as an effect/filter in the scene
   Future<void> switchEffectWithSlot(
@@ -190,99 +216,6 @@ class DeepArController {
             _deepArPlatformHandler.switchFilterAndroid(filter),
         iOSFunction: () =>
             _deepArPlatformHandler.switchFilterIos(filter, _textureId!));
-  }
-
-  ///Starts recording video
-  Future<void> startVideoRecording() async {
-    if (_isRecording) throw ("Recording already in progress");
-    if (Platform.isAndroid) {
-      _deepArPlatformHandler.startRecordingVideoAndroid();
-      _isRecording = true;
-    } else {
-      _deepArPlatformHandler.startRecordingVideoIos(_textureId!);
-      _isRecording = true;
-    }
-  }
-
-  ///Stop recording video
-  Future<File> stopVideoRecording() async {
-    if (!_isRecording) {
-      throw ("Invalid stopVideoRecording trigger. No recording was in progress");
-    }
-    final _file = await platformRun(
-        androidFunction: _deepArPlatformHandler.stopRecordingVideoAndroid,
-        iOSFunction: () =>
-            _deepArPlatformHandler.stopRecordingVideoIos(_textureId!));
-    _isRecording = false;
-    if (_file == "ENDED_WITH_ERROR") throw ("Video capture failed");
-
-    return File(_file!);
-  }
-
-  ///Flips Camera and return the current direction
-  Future<CameraDirection> flipCamera() async {
-    final result = await platformRun(
-        androidFunction: _deepArPlatformHandler.flipCamera,
-        iOSFunction: () => _deepArPlatformHandler.flipCameraIos(_textureId!));
-    if (result != null && result) {
-      _cameraDirection = _cameraDirection == CameraDirection.front
-          ? CameraDirection.rear
-          : CameraDirection.front;
-      if (_cameraDirection == CameraDirection.front) _flashState = false;
-    }
-    return _cameraDirection;
-  }
-
-  ///Takes picture of the current frame and returns a [File]
-  Future<File> takeScreenshot() async {
-    final _file = await platformRun(
-        androidFunction: _deepArPlatformHandler.takeScreenShot,
-        iOSFunction: () =>
-            _deepArPlatformHandler.takeScreenShotIos(_textureId!));
-    if (_file == "ENDED_WITH_ERROR") throw ("Video capture failed");
-
-    return File(_file!);
-  }
-
-  ///Toggles flash and returns its status
-  Future<bool> toggleFlash() async {
-    bool result = await platformRun(
-        androidFunction: _deepArPlatformHandler.toggleFlash,
-        iOSFunction: () => _deepArPlatformHandler.toggleFlashIos(_textureId!));
-    _flashState = result;
-    return _flashState;
-  }
-
-  ///Fire named trigger of an fbx animation set on the currently loaded effect.
-  Future<void> fireTrigger({required String trigger}) async {
-    await platformRun(
-        androidFunction: () => _deepArPlatformHandler.fireTrigger(trigger),
-        iOSFunction: () =>
-            _deepArPlatformHandler.fireTriggerIos(_textureId!, trigger));
-  }
-
-  ///Display debugging stats on screen.
-  Future<void> showStats({required bool enabled}) async {
-    await platformRun(
-        androidFunction: () => _deepArPlatformHandler.showStats(enabled),
-        iOSFunction: () =>
-            _deepArPlatformHandler.showStatsIos(_textureId!, enabled));
-  }
-
-  ///Enable or disable global physics simulation.
-  Future<void> simulatePhysics({required bool enabled}) async {
-    await platformRun(
-        androidFunction: () => _deepArPlatformHandler.simulatePhysics(enabled),
-        iOSFunction: () =>
-            _deepArPlatformHandler.simulatePhysicsIos(_textureId!, enabled));
-  }
-
-  ///Display physics colliders preview on screen.
-  Future<void> showColliders({required bool enabled}) async {
-    await platformRun(
-        androidFunction: () => _deepArPlatformHandler.showColliders(enabled),
-        iOSFunction: () =>
-            _deepArPlatformHandler.showCollidersIos(_textureId!, enabled));
   }
 
   ///Moves the selected game object from its current position in a tree and sets it as a direct child of a target game object.
@@ -340,11 +273,77 @@ class DeepArController {
     }
   }
 
+  ///Flips Camera and return the current direction
+  Future<CameraDirection> flipCamera() async {
+    final result = await platformRun(
+        androidFunction: _deepArPlatformHandler.flipCamera,
+        iOSFunction: () => _deepArPlatformHandler.flipCameraIos(_textureId!));
+    if (result != null && result) {
+      _cameraDirection = _cameraDirection == CameraDirection.front
+          ? CameraDirection.rear
+          : CameraDirection.front;
+      if (_cameraDirection == CameraDirection.front) _flashState = false;
+    }
+    return _cameraDirection;
+  }
+
+  ///Toggles flash and returns its status
+  Future<bool> toggleFlash() async {
+    bool result = await platformRun(
+        androidFunction: _deepArPlatformHandler.toggleFlash,
+        iOSFunction: () => _deepArPlatformHandler.toggleFlashIos(_textureId!));
+    _flashState = result;
+    return _flashState;
+  }
+
+  ///Fire named trigger of an fbx animation set on the currently loaded effect.
+  Future<void> fireTrigger({required String trigger}) async {
+    await platformRun(
+        androidFunction: () => _deepArPlatformHandler.fireTrigger(trigger),
+        iOSFunction: () =>
+            _deepArPlatformHandler.fireTriggerIos(_textureId!, trigger));
+  }
+
+  ///Display debugging stats on screen.
+  Future<void> showStats({required bool enabled}) async {
+    await platformRun(
+        androidFunction: () => _deepArPlatformHandler.showStats(enabled),
+        iOSFunction: () =>
+            _deepArPlatformHandler.showStatsIos(_textureId!, enabled));
+  }
+
+  ///Enable or disable global physics simulation.
+  Future<void> simulatePhysics({required bool enabled}) async {
+    await platformRun(
+        androidFunction: () => _deepArPlatformHandler.simulatePhysics(enabled),
+        iOSFunction: () =>
+            _deepArPlatformHandler.simulatePhysicsIos(_textureId!, enabled));
+  }
+
+  ///Display physics colliders preview on screen.
+  Future<void> showColliders({required bool enabled}) async {
+    await platformRun(
+        androidFunction: () => _deepArPlatformHandler.showColliders(enabled),
+        iOSFunction: () =>
+            _deepArPlatformHandler.showCollidersIos(_textureId!, enabled));
+  }
+
   ///Releases all resources required by DeepAR.
   Future<void> destroy() async {
     await platformRun(
         androidFunction: _deepArPlatformHandler.destroy,
         iOSFunction: () => _deepArPlatformHandler.destroyIos(_textureId!));
+  }
+
+  ///Listen to native delegate methods
+  void _setNativeListenerIos() {
+    try {
+      _deepArPlatformHandler.setListenerIos(_textureId!);
+    } catch (e) {
+      debugPrint(
+          "Exception while setting iOS response listener, won't be able to notify flutter once files are available");
+      debugPrint("Error $e");
+    }
   }
 
   Future<bool> _askMediaPermission() async {
