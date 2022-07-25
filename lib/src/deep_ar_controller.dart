@@ -244,7 +244,7 @@ class DeepArController {
     return File(_file!);
   }
 
-  ///Returns true if toggle was success
+  ///Toggles flash and returns its status
   Future<bool> toggleFlash() async {
     bool result = await platformRun(
         androidFunction: _deepArPlatformHandler.toggleFlash,
