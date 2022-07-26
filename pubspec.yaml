@@ -1,7 +1,8 @@
 name: deepar_flutter
 description: Official Flutter SDK for DeepAR
 version: 0.0.1
-homepage: null
+homepage: http://deepar.ai
+repository: https://github.com/DeepARSDK/deepar-flutter-plugin
 
 environment:
   sdk: ">=2.16.1 <3.0.0"
