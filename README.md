@@ -21,9 +21,10 @@ Once done, please add the latest `deepar_flutter` dependency to your pubspec.yam
 Please download the native android dependencies from our [downloads](https://developer.deepar.ai/downloads) section and save it at two locations:
  1. In your flutter project as `android/app/libs/deepar.aar`.
  2. In the root of your flutter environment directory, navigate to deepar_flutter [pub-cache folder](https://dart.dev/tools/pub/cmd/pub-get#the-system-package-cache) and create a new `libs` folder and place the `deepar.aar` file as following:
--   `~/.pub-cache/hosted/pub.dartlang.org/deepar-<plugin-version>/android/libs/deepar.aar`  (Linux/ Mac)
--   `%LOCALAPPDATA%\Pub\Cache\hosted\pub.dartlang.org\deepar-<plugin-version>\android\libs\deepar.aar`(Windows)
+-   `~/.pub-cache/hosted/pub.dartlang.org/deepar_flutter-<plugin-version>/android/libs/deepar.aar`  (Linux/ Mac)
+-   `%LOCALAPPDATA%\Pub\Cache\hosted\pub.dartlang.org\deepar_flutter-<plugin-version>\android\libs\deepar.aar`(Windows)
 -   compileSdkVersion should be 33 or more.
+-   minSdkVersion should be 21 or more.
 
 Also add the following permission requests in your AndroidManifest.xml
 ```
