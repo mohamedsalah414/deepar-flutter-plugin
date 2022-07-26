@@ -255,7 +255,6 @@ class _HomeState extends State<Home> {
       _maskList.clear();
       _maskList.add(_assetEffectsPath + 'flower_face.deepar');
       _maskList.add(_assetEffectsPath + 'viking_helmet.deepar');
-      _maskList.add(_assetEffectsPath + 'Humanoid.deepar');
 
       _filterList.clear();
       _filterList.add(_assetEffectsPath + 'burning_effect.deepar');
