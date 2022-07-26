@@ -11,7 +11,7 @@ Official Flutter SDK for DeepAR Plugin.
                        DESC
   s.homepage         = 'http://deepar.ai'
   s.license          = { :file => '../LICENSE' }
-  s.author           = { 'Company' => 'example@example.com' }
+  s.author           = { 'Deepar.ai' => 'support@deepar.ai' }
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
   s.resources    = ['Assets/**.*']
