@@ -6,3 +6,6 @@
 .DS_Store
 /build
 /captures
+/android/libs
+/example/android/app/libs
+/ios/DeepAR.xcframework
