@@ -15,14 +15,15 @@ The current version of plugin supports:
 ## Installation
 Please visit our [developer website](https://developer.deepar.ai) to create a project and generate your separate license keys for both platforms. 
 
-Once done, please add the latest `deepar` dependency to your pubspec.yaml. 
+Once done, please add the latest `deepar_flutter` dependency to your pubspec.yaml. 
 
 **Android**: 
 Please download the native android dependencies from our [downloads](https://developer.deepar.ai/downloads) section and save it at two locations:
- 1. In your flutter project as `android/libs/deepar.aar`.
- 2. In the deepar flutter [pub-cache folder](https://dart.dev/tools/pub/cmd/pub-get#the-system-package-cache) as following:
--   `~/.pub-cache/hosted/pub.dartlang.org/deepar-<plugin-version>/android/libs/deepar.ar`  (Linux/ Mac)
--   `%LOCALAPPDATA%\Pub\Cache\hosted\pub.dartlang.org\deepar-<plugin-version>\android\libs\deepar.ar`(Windows)
+ 1. In your flutter project as `android/app/libs/deepar.aar`.
+ 2. In the root of your flutter environment directory, navigate to deepar_flutter [pub-cache folder](https://dart.dev/tools/pub/cmd/pub-get#the-system-package-cache) and create a new `libs` folder and place the `deepar.aar` file as following:
+-   `~/.pub-cache/hosted/pub.dartlang.org/deepar-<plugin-version>/android/libs/deepar.aar`  (Linux/ Mac)
+-   `%LOCALAPPDATA%\Pub\Cache\hosted\pub.dartlang.org\deepar-<plugin-version>\android\libs\deepar.aar`(Windows)
+-   compileSdkVersion should be 33 or more.
 
 Also add the following permission requests in your AndroidManifest.xml
 ```
@@ -37,14 +38,15 @@ Also add the following permission requests in your AndroidManifest.xml
 1. Ensure your app iOS deployment version is 13.0+.
 2. Download the DeepAR iOS binaries from [here](https://developer.deepar.ai/downloads).  
 3. Copy the `DeepAR.xcframework` file from `/lib` folder of the downloaded file and paste as `/ios/DeepAR.xcframework` in the plugin's directory. Please use the pub-cache folder reference as mentioned in android section.
-4. To handle camera and microphone permissions, please add the following strings to your info.plist.
+4. Do a flutter clean & install pods again.
+5. To handle camera and microphone permissions, please add the following strings to your info.plist.
 ```
 <key>NSCameraUsageDescription</key>
 <string>---Reason----</string>
 <key>NSMicrophoneUsageDescription</key>
 <string>---Reason----</string>
 ```
-5. Also add the following to your `Podfile` file:
+6. Also add the following to your `Podfile` file:
 ```
 post_install do |installer|
   installer.pods_project.targets.each do |target|
