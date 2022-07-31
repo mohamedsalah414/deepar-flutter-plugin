@@ -85,7 +85,8 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return Scaffold( 
+     body: Stack(
       children: [
         _controller.isInitialized
             ? DeepArPreview(_controller)
@@ -95,7 +96,7 @@ class _HomeState extends State<Home> {
         _topMediaOptions(),
         _bottomMediaOptions(),
       ],
-    );
+    ));
   }
 
   // flip, face mask, filter, flash
